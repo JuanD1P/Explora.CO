@@ -1,116 +1,191 @@
-
-.registro-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    padding: 20px;
-    margin: 0;
-    font-family: 'Arial', sans-serif;
-    background: url("../../ImagenesP/ImagenesLogin/FONDO.png");
-    background-size: cover; 
-    background-position: center; 
-    background-repeat: no-repeat; 
+.card-inner{
+  will-change: transform, opacity;
+  transform: translateZ(0);              
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+  contain: paint;                      
 }
 
-.form-container {
-    background-color: rgba(255, 255, 255, 0.5);
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    padding: 30px;
-    width: 100%;
-    max-width: 400px;
-    text-align: center;
-    margin: 0 auto; 
+.card-inner.flip-right{ animation: flipRight .42s cubic-bezier(.22,.61,.36,1) both; }
+.card-inner.flip-left { animation: flipLeft  .42s cubic-bezier(.22,.61,.36,1) both; }
+
+@keyframes flipRight{
+  0%   { transform: perspective(1000px) rotateY(0deg) translateZ(0); opacity:1 }
+  50%  { transform: perspective(1000px) rotateY(-7deg) translateZ(0); opacity:.98 }
+  100% { transform: perspective(1000px) rotateY(0deg) translateZ(0); opacity:1 }
+}
+@keyframes flipLeft{
+  0%   { transform: perspective(1000px) rotateY(0deg) translateZ(0); opacity:1 }
+  50%  { transform: perspective(1000px) rotateY(7deg) translateZ(0);  opacity:.98 }
+  100% { transform: perspective(1000px) rotateY(0deg) translateZ(0); opacity:1 }
+}
+.page-empresa, .page-user{
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
-h1 {
-    margin-bottom: 5px;
-    color: #150627;
+.segmented-thumb{
+  will-change: transform;
+  transform: translateZ(0);
 }
 
-p {
-    margin-top: 0%;
-    margin-bottom: 15px;
-    color: #150627;
+@media (prefers-reduced-motion: reduce){
+  .card-inner,
+  .card-inner.flip-right,
+  .card-inner.flip-left{
+    animation: none !important;
+  }
 }
 
-.logoLogin{
-    width: 50%;
-    margin-bottom: 0px;
+.registro-container{
+  display:grid; place-items:center;
+  min-height:100vh; padding:20px; margin:0;
+  font-family:'Arial',sans-serif;
+  background:url("../../ImagenesP/ImagenesLogin/FONDO.png") center/cover no-repeat;
 }
 
-label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: bold;
-    color: #150627;
+.form-container{
+  background:rgba(255,255,255,.55);
+  border:1px solid rgba(21,6,39,.18);
+  border-radius:14px;
+  box-shadow:0 14px 32px rgba(0,0,0,.18);
+  padding:24px 22px 26px;
+  width:100%; max-width:420px; text-align:center;
+  margin:0 auto;
+  backdrop-filter:saturate(120%) blur(2px);
+  transform-style:preserve-3d; perspective:1200px;
+  animation:cardPop .25s ease both;
+}
+
+.form-container.flip-right{ animation:flipRight .42s ease; }
+.form-container.flip-left{  animation:flipLeft  .42s ease; }
+
+@keyframes flipRight{
+  0%{ transform: perspective(1200px) rotateY(0deg) }
+  40%{ transform: perspective(1200px) rotateY(-10deg) translateX(-6px)}
+  70%{ transform: perspective(1200px) rotateY(6deg)  translateX(2px)}
+  100%{transform: perspective(1200px) rotateY(0deg) translateX(0)}
+}
+@keyframes flipLeft{
+  0%{ transform: perspective(1200px) rotateY(0deg) }
+  40%{ transform: perspective(1200px) rotateY(10deg) translateX(6px)}
+  70%{ transform: perspective(1200px) rotateY(-6deg) translateX(-2px)}
+  100%{transform: perspective(1200px) rotateY(0deg) translateX(0)}
+}
+@keyframes cardPop{ from{opacity:0; transform:translateY(-2px)} to{opacity:1; transform:translateY(0)} }
+
+.headerForm p{ margin:0 0 12px; color:#150627 }
+.logoLogin{ width:48%; margin-bottom:6px; }
+
+.segmented{
+  position:relative; margin:0 auto 14px; width:90%; height:42px;
+  background:rgba(255,255,255,.7);
+  border:2px solid #2b2a67; border-radius:12px; overflow:hidden;
+  display:grid; grid-template-columns:1fr 1fr;
+  box-shadow:inset 0 0 0 1px rgba(90,45,191,.06);
+}
+.segmented-thumb{
+  position:absolute; inset:2px auto 2px 2px; width:calc(50% - 2px);
+  background:linear-gradient(135deg, rgba(90,45,191,.95) 0%, rgba(18,32,86,.95) 100%);
+  border-radius:10px; transition:transform .25s ease;
+  will-change:transform;
+}
+.segmented[data-pos="1"] .segmented-thumb{ transform:translateX(100%); }
+
+.segmented-btn{
+  position:relative; z-index:1;
+  border:0; background:transparent; cursor:pointer; font-weight:700;
+  color:#150627; transition: transform .08s ease, color .25s ease;
+}
+.segmented-btn.active{ color:#fff; }
+.segmented-btn:hover{ transform:translateY(-1px); }
+
+.fields-viewport{ position:relative; overflow:hidden; }
+.fields-page{ padding-top:4px; }
+.page-empresa, .page-user{ animation:fadeSlide .25s ease both; }
+@keyframes fadeSlide{
+  from{ opacity:0; transform:translateY(-4px) }
+  to{   opacity:1; transform:translateY(0) }
 }
 
 input,
-.password-container input {
-    display: block;
-    margin: 0 auto 15px auto;
-    width: 90%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-size: 16px;
-    transition: border-color 0.3s;
+.password-container input{
+  display:block; margin:0 auto 14px; width:90%;
+  padding:12px 12px; font-size:16px;
+  border:1px solid #bfbfd4; border-radius:10px;
+  background:rgba(255,255,255,.9);
+  transition:border-color .2s, box-shadow .2s, transform .04s ease;
+}
+input:hover{ transform:translateY(-1px); }
+input:focus{
+  border-color:#5a2dbf;
+  outline:0;
+  box-shadow:0 0 0 3px rgba(90,45,191,.18);
 }
 
-input:focus {
-    border-color: #150627;
-    outline: none;
+.password-container{ position:relative; width:100%; display:flex; justify-content:center; }
+.toggle-eye{
+  position:absolute; right:26px; top:10px;
+  background:none; border:none; cursor:pointer; font-size:18px; color:#2b2a67;
+  transition:transform .08s ease;
+}
+.toggle-eye:hover{ transform:scale(1.05) }
+
+.btn-primary{
+  display:block; margin:4px auto 12px; width:90%; padding:12px;
+  border-radius:10px; font-size:16px; border:none; color:#fff;
+  background:linear-gradient(135deg,#5a2dbf 0%,#122056 100%);
+  cursor:pointer; position:relative; overflow:hidden;
+  transition:filter .2s ease, transform .06s ease, box-shadow .2s ease;
+  box-shadow:0 8px 20px rgba(18,32,86,.22);
+}
+.btn-primary:hover{ filter:brightness(1.05); box-shadow:0 10px 24px rgba(18,32,86,.28); }
+.btn-primary:active{ transform:translateY(1px) }
+.btn-primary::after{
+  content:""; position:absolute; inset:auto; width:0; height:0; border-radius:50%;
+  background:rgba(255,255,255,.25); transform:translate(-50%,-50%);
+  pointer-events:none; opacity:0;
+}
+.btn-primary:where(:hover,:focus-visible){
+  animation:ink 1s ease forwards;
+}
+@keyframes ink{
+  0%{ }
+  50%{ }
 }
 
-.password-container {
-    position: relative;
-    width: 100%; /* que no se achique */
-    display: flex;
-    justify-content: center; /* centra el input y botón */
+.botonLogin1{
+  display:block; margin:0 auto; width:90%; padding:11px;
+  border-radius:10px; font-size:15px; border:2px solid #2b2a67;
+  background:rgba(255,255,255,.65); color:#150627; cursor:pointer;
+  transition:background .2s ease, transform .06s ease, box-shadow .2s ease;
+}
+.botonLogin1:hover{
+  background:rgba(255,255,255,.85);
+  transform:translateY(-1px);
+  box-shadow:0 8px 18px rgba(21,6,39,.12);
 }
 
-button[type="button"] {
-    position: absolute;
-    right: 10px;
-    top: 10px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #150627;
-    font-size: 18px;
+.error-message{
+  background:#fdecea; color:#b71c1c; border:1px solid #f5c2c0;
+  padding:10px 15px; border-radius:10px; margin-bottom:14px;
+  font-weight:500; font-size:14px; width:min(420px,92%);
 }
 
-button[type="submit"] {
-    display: block; 
-    margin: 0 auto 15px auto;
-    width: 90%; 
-    padding: 10px;
-    margin-bottom: 15px;
-    border-radius: 8px;
-    font-size: 16px;
-    background-color: #40117a;
-    color: white;
-    border: none;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-} 
-
-button[type="submit"]:hover {
-    background-color: #3f8061;
+.segmented-btn:focus-visible,
+.toggle-eye:focus-visible,
+.btn-primary:focus-visible,
+.botonLogin1:focus-visible{
+  outline:3px solid rgba(90,45,191,.38);
+  outline-offset:2px;
 }
 
-
-.error-message {
-  background: #fdecea;      
-  color: #b71c1c;      
-  border: 1px solid #f5c2c0; 
-  padding: 10px 15px;
-  border-radius: 8px;
-  margin-bottom: 15px;
-  font-weight: 500;
-  font-size: 14px;
+.sr-only{
+  position:absolute!important;
+  width:1px!important; height:1px!important;
+  padding:0!important; margin:-1px!important;
+  overflow:hidden!important; clip:rect(0,0,1px,1px)!important;
+  white-space:nowrap!important; border:0!important;
 }

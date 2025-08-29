@@ -8,42 +8,38 @@ const router = express.Router();
 
 // 🚀 REGISTRO DE USUARIOS
 router.post('/register', async (req, res) => {
-    const { email, password, nombre_completo } = req.body;
+  const { email, password, nombre_completo } = req.body;
+  const rol = (req.body.rol || 'USER').toUpperCase();
+  const telefono = req.body.telefono || null;
 
-    if (!email || !password || !nombre_completo) {
-        return res.json({ registrationStatus: false, Error: "Faltan datos" });
-    }
+  if (!email || !password || !nombre_completo) {
+    return res.json({ registrationStatus: false, Error: "Faltan datos" });
+  }
+  if (!['USER','EMPRESA'].includes(rol)) {
+    return res.json({ registrationStatus: false, Error: "Rol inválido" });
+  }
+  if (rol === 'EMPRESA' && !telefono) {
+    return res.json({ registrationStatus: false, Error: "El teléfono es obligatorio para EMPRESA" });
+  }
+
+  con.query("SELECT id FROM usuarios WHERE email = ?", [email], async (err, result) => {
+    if (err) return res.json({ registrationStatus: false, Error: "Error en la base de datos" });
+    if (result.length > 0) return res.json({ registrationStatus: false, Error: "El email ya está registrado" });
 
     try {
-        con.query("SELECT * FROM usuarios WHERE email = ?", [email], async (err, result) => {
-            if (err) {
-                console.error("Error en la consulta:", err);
-                return res.json({ registrationStatus: false, Error: "Error en la base de datos" });
-            }
-            if (result.length > 0) {
-                return res.json({ registrationStatus: false, Error: "El email ya está registrado" });
-            }
-
-            // Encriptar la contraseña
-            const hashedPassword = await bcrypt.hash(password, 10);
-
-            // Insertar usuario con rol 'USER' por defecto
-            const sql = "INSERT INTO usuarios (email, password, nombre_completo, rol) VALUES (?, ?, ?, 'USER')";
-            con.query(sql, [email, hashedPassword, nombre_completo], (err, result) => {
-                if (err) {
-                    console.error("Error al insertar usuario:", err);
-                    return res.json({ registrationStatus: false, Error: "Error de inserción" });
-                }
-                console.log("Usuario registrado correctamente");
-                return res.json({ registrationStatus: true });
-            });
-        });
-
-    } catch (error) {
-        console.error("Error en el registro:", error);
-        res.status(500).json({ registrationStatus: false, Error: "Error interno" });
+      const hashed = await bcrypt.hash(password, 10);
+      const sql = `INSERT INTO usuarios (email, password, nombre_completo, rol, telefono)
+                   VALUES (?, ?, ?, ?, ?)`;
+      con.query(sql, [email, hashed, nombre_completo, rol, telefono], (err2) => {
+        if (err2) return res.json({ registrationStatus: false, Error: "Error de inserción" });
+        return res.json({ registrationStatus: true });
+      });
+    } catch {
+      return res.status(500).json({ registrationStatus: false, Error: "Error interno" });
     }
+  });
 });
+
 
 // 🚀 LOGIN DE USUARIOS
 router.post('/userlogin', (req, res) => {

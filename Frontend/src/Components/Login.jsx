@@ -63,39 +63,34 @@ const Login = () => {
     };
     
     return (
-        <div className="LoginPcontainer">
-            
-            <div className='LoginScontainer'>
-            <img src={logo} alt="Logo" className="logoLogin" />
-                <div className={`text-dangerLogin ${error ? 'show' : ''}`}>
-                    {error && error}
-                </div>
-                <form onSubmit={handleSubmit} className='formularioLogin'>
-                    <div className='form1'>
-                        <input 
-                            type='email' 
-                            name='email' 
-                            autoComplete='off' 
-                            placeholder='Ingresa Email' 
-                            onChange={(e) => setValues({ ...values, email: e.target.value })}
-                            className='input1'
-                        />
-                    </div>
-                    <div className='form2'>
-                        <input 
-                            type='password' 
-                            name='password' 
-                            placeholder='Ingresa Contraseña' 
-                            onChange={(e) => setValues({ ...values, password: e.target.value })}
-                            className='input2'
-                        />
-                    </div>
+        <div className="login-container">
+  <div className="login-card">
+    <img src={logo} alt="Logo" className="login-logo" />
+    
+    <div className={`login-error ${error ? 'show' : ''}`}>
+      {error && error}
+    </div>
 
-                    <button type="submit"  className='boton2'>Ingresa</button>
-                </form>
-                <button onClick={() => navigate('/Registro')} className='botonLogin1'>Ir a Registro</button>
-            </div>
-        </div>
+    <form onSubmit={handleSubmit} className="login-form">
+      <input 
+        type="email"
+        placeholder="Ingresa Email"
+        onChange={(e) => setValues({ ...values, email: e.target.value })}
+      />
+      <input 
+        type="password"
+        placeholder="Ingresa Contraseña"
+        onChange={(e) => setValues({ ...values, password: e.target.value })}
+      />
+      <button type="submit" className="login-btn">Ingresa</button>
+    </form>
+
+    <button onClick={() => navigate('/Registro')} className="login-btn-secondary">
+      Ir a Registro
+    </button>
+  </div>
+</div>
+
     );
 };
 

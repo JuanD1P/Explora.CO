@@ -1,4 +1,8 @@
 import { BrowserRouter as Router, Route, Routes, Navigate, Outlet } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import './Index.css';
+
 import Login from './Components/Login';
 import Registro from './Components/Registro';
 import Inicio from './Components/Inicio';
@@ -7,47 +11,55 @@ import ProtectedRoute from './Components/PrivateRoute';
 import Admin from './Components/Admin';
 import Navbar from './Components/Navbar';
 
-
 function App() {
-    return (
-        <Router>
-            <Routes>
-                <Route path="/" element={<Navigate to="/userlogin" />} />
-                <Route path="/userlogin" element={<Login />} />
-                <Route path="/Registro" element={<Registro />} />
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Navigate to="/userlogin" />} />
+        <Route path="/userlogin" element={<Login />} />
+        <Route path="/Registro" element={<Registro />} />
 
-                
-                {/* RUTAS PARA EL ADMINISTRADOR */}
+        {/* RUTAS PARA EL ADMINISTRADOR */}
+        <Route
+          path="/Admin"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <Admin />
+            </ProtectedRoute>
+          }
+        />
 
-                    <Route path="/Admin" element={
-                        <ProtectedRoute allowedRoles={['ADMIN']}>
-                            <Admin />
-                        </ProtectedRoute>
-                    } />
+        {/* RUTAS PARA LOS USUARIOS */}
+        <Route element={<LayoutWithNavbar />}>
+          <Route
+            path="/Inicio"
+            element={
+              <ProtectedRoute allowedRoles={['USER']}>
+                <Inicio />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
 
+        {/* RUTA NO ENCONTRADA */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
 
-                {/* RUTAS PARA LOS USUARIOS */}   
-
-                <Route element={<LayoutWithNavbar />}>
-                    <Route path="/Inicio" element={
-                        <ProtectedRoute allowedRoles={['USER']}>
-                            <Inicio />
-                        </ProtectedRoute>
-                    } />
-
-                </Route>
-
-    
-
-                {/* RUTA NO ENCONTRADA */}
-                <Route path="*" element={<NotFound />} />
-            </Routes>
-        </Router>
-    );
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        draggable
+        theme="colored"  
+      />
+    </Router>
+  );
 }
 
-
-//Navbar
+// Navbar
 function LayoutWithNavbar() {
   return (
     <>

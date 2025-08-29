@@ -1,150 +1,210 @@
-import React, { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { toast } from 'react-toastify';
 import './DOCSS/Registro.css';
 import logo from '../ImagenesP/ImagenesLogin/LOGOCO.png';
 
 const Registro = () => {
-    const [values, setValues] = useState({
-        nombre_completo: '',
-        email: '',
-        password: '',
-        confirmPassword: ''
-    });
+  const [values, setValues] = useState({
+    rol: 'USER',                
+    nombre_completo: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    telefono: ''              
+  });
 
-    const [error, setError] = useState(null);
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const navigate = useNavigate();
-    axios.defaults.withCredentials = true;
+  const [error, setError] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [flip, setFlip] = useState('');
+  const navigate = useNavigate();
+  axios.defaults.withCredentials = true;
 
-    const handleSubmit = async (event) => {
-        event.preventDefault();
-        setError(null);
+  const set = (k) => (e) => setValues(v => ({ ...v, [k]: e.target.value }));
 
-        // Validaciones de campos obligatorios
-        if (!values.nombre_completo || !values.email || !values.password || !values.confirmPassword) {
-            setError("Todos los campos son obligatorios");
-            return;
-        }
+  const handleRole = (rol) => {
+    setFlip(rol === 'EMPRESA' ? 'flip-right' : 'flip-left');
+    setTimeout(() => setFlip(''), 450);
 
-        // ✅ Validación: el correo debe contener al menos un '@'
-        if (!values.email.includes('@')) {
-            setError("El correo debe contener un '@'");
-            return;
-        }
+    setValues(v => ({
+      ...v,
+      rol,
+      telefono: rol === 'EMPRESA' ? v.telefono : ''
+    }));
+    setError(null);
+  };
 
-        // ✅ Validación: longitud mínima de contraseña
-        if (values.password.length < 6) {
-            setError("La contraseña debe tener al menos 6 caracteres");
-            return;
-        }
+  const handleSubmit = async (event) => {
+    event.preventDefault();           
+    setError(null);                   
 
-        // ✅ Validación: debe contener al menos una letra
-        const hasLetter = /[A-Za-z]/.test(values.password);
-        if (!hasLetter) {
-            setError("La contraseña debe contener al menos una letra");
-            return;
-        }
 
-        // ✅ Validación: debe contener al menos un número
-        const hasNumber = /\d/.test(values.password);
-        if (!hasNumber) {
-            setError("La contraseña debe contener al menos un número");
-            return;
-        }
+    const fail = (msg) => { setError(msg); toast.warn(msg); };
 
-        // Validación: coincidencia de contraseñas
-        if (values.password !== values.confirmPassword) {
-            setError("Las contraseñas no coinciden");
-            return;
-        }
 
-        const dataToSend = {
-            nombre_completo: values.nombre_completo,
-            email: values.email,
-            password: values.password
-        };
+    if (!values.nombre_completo || !values.email || !values.password || !values.confirmPassword)
+      return fail("Todos los campos marcados con * son obligatorios");
 
-        try {
-            const result = await axios.post('http://localhost:3000/auth/register', dataToSend);
-            if (result.data.registrationStatus) {
-                alert("Registro exitoso");
-                navigate('/userlogin');
-            } else {
-                setError(result.data.Error);
-            }
-        } catch (err) {
-            console.error("Error en el registro:", err);
-            setError("Error en el servidor, intenta más tarde");
-        }
+    if (!values.email.includes('@'))
+      return fail("El correo debe contener un '@'");
+
+    if (values.password.length < 6)
+      return fail("La contraseña debe tener al menos 6 caracteres");
+
+    if (!/[A-Za-z]/.test(values.password))
+      return fail("La contraseña debe contener al menos una letra");
+
+    if (!/\d/.test(values.password))
+      return fail("La contraseña debe contener al menos un número");
+
+    if (values.password !== values.confirmPassword)
+      return fail("Las contraseñas no coinciden");
+
+    if (values.rol === 'EMPRESA' && !values.telefono)
+      return fail("Para empresas, el teléfono es obligatorio");
+
+    const payload = {
+      rol: values.rol,
+      nombre_completo: values.nombre_completo,
+      email: values.email,
+      password: values.password,
+      ...(values.rol === 'EMPRESA' ? { telefono: values.telefono } : {})
     };
 
-    return (
-        <div className="registro-container">
-            {error && <div className='error-message'>{error}</div>}
+    try {
+      const result = await axios.post('http://localhost:3000/auth/register', payload);
 
-            <form onSubmit={handleSubmit} className='form-container'>
-                <div>
-                    <img src={logo} alt="Logo" className="logoLogin" />
-                    <p>Completa el formulario: </p>
-                </div>
+      if (result?.data?.registrationStatus) {
+        toast.success("Registro exitoso");
+        navigate('/userlogin');
+      } else {
+        const msg = result?.data?.Error || "No se pudo completar el registro";
+        setError(msg);
+        toast.error(`⚠️ ${msg}`);
+      }
+    } catch (err) {
+      console.error("Error en el registro:", err);
+      setError("Error en el servidor, intenta más tarde");
+      toast.error("💥 Error en el servidor, intenta más tarde");
+    }
+  };
 
-                <input 
-                    type="text"
-                    value={values.nombre_completo}
-                    onChange={(e) => setValues({ ...values, nombre_completo: e.target.value })} 
-                    placeholder="Nombre Completo"
-                    required
+
+  const thumbX = useMemo(() => (values.rol === 'EMPRESA' ? 0 : 1), [values.rol]);
+
+  return (
+    <div className="registro-container">
+
+      <div aria-live="polite" className="sr-only">{error}</div>
+
+      <form noValidate onSubmit={handleSubmit} className="form-container">
+
+        <div className={`card-inner ${flip}`}>
+          <div className="headerForm">
+            <img src={logo} alt="Logo" className="logoLogin" />
+            <p>Completa el formulario ({values.rol === 'EMPRESA' ? 'empresa' : 'usuario'})</p>
+          </div>
+
+          <div className="segmented" role="tablist" aria-label="Tipo de registro" data-pos={thumbX}>
+            <span className="segmented-thumb" aria-hidden="true" />
+            <button
+              type="button"
+              role="tab"
+              aria-selected={values.rol === 'EMPRESA'}
+              className={`segmented-btn ${values.rol === 'EMPRESA' ? 'active' : ''}`}
+              onClick={() => handleRole('EMPRESA')}
+            >
+              Soy empresa
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={values.rol === 'USER'}
+              className={`segmented-btn ${values.rol === 'USER' ? 'active' : ''}`}
+              onClick={() => handleRole('USER')}
+            >
+              Soy usuario
+            </button>
+          </div>
+
+          <div className="fields-viewport">
+            <div className={`fields-page ${values.rol === 'EMPRESA' ? 'page-empresa' : 'page-user'}`}>
+              <input
+                type="text"
+                value={values.nombre_completo}
+                onChange={set('nombre_completo')}
+                placeholder="Nombre completo del contacto *"
+                required
+              />
+
+              {values.rol === 'EMPRESA' && (
+                <input
+                  type="tel"
+                  value={values.telefono}
+                  onChange={set('telefono')}
+                  placeholder="Teléfono de la empresa *"
+                  required
                 />
-    
-                <input 
-                    type="email"
-                    value={values.email}
-                    onChange={(e) => setValues({ ...values, email: e.target.value })} 
-                    placeholder="Email"
-                    required
+              )}
+
+              {/* Email */}
+              <input
+                type="email"
+                value={values.email}
+                onChange={set('email')}
+                placeholder="Email *"
+                required
+              />
+
+              <div className="password-container">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={values.password}
+                  onChange={set('password')}
+                  placeholder="Contraseña *"
+                  required
                 />
+                <button
+                  type="button"
+                  className="toggle-eye"
+                  onClick={() => setShowPassword(s => !s)}
+                  aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
 
-                <div className="password-container">
-                    <input 
-                        type={showPassword ? 'text' : 'password'} 
-                        value={values.password}
-                        onChange={(e) => setValues({ ...values, password: e.target.value })} 
-                        placeholder="Contraseña"
-                        required
-                    />
-                    <button 
-                        type="button" 
-                        onClick={() => setShowPassword(!showPassword)}
-                    >
-                        {showPassword ? <FaEyeSlash /> : <FaEye />}
-                    </button>
-                </div>
+              <div className="password-container">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={values.confirmPassword}
+                  onChange={set('confirmPassword')}
+                  placeholder="Confirmar contraseña *"
+                  required
+                />
+                <button
+                  type="button"
+                  className="toggle-eye"
+                  onClick={() => setShowConfirmPassword(s => !s)}
+                  aria-label={showConfirmPassword ? "Ocultar confirmación" : "Mostrar confirmación"}
+                >
+                  {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
+            </div>
+          </div>
 
-                <div className="password-container">
-                    <input 
-                        type={showConfirmPassword ? 'text' : 'password'} 
-                        value={values.confirmPassword}
-                        onChange={(e) => setValues({ ...values, confirmPassword: e.target.value })} 
-                        placeholder="Confirmar Contraseña"
-                        required
-                    />
-                    <button 
-                        type="button" 
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    >
-                        {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-                    </button>
-                </div>
-
-                <button type="submit">Registrarse</button>
-                <button onClick={() => navigate('/userlogin')} className='botonLogin1'>Inicia Sesion</button>
-            </form>
+          <button type="submit" className="btn-primary">Registrarse</button>
+          <button type="button" onClick={() => navigate('/userlogin')} className='botonLogin1'>
+            Inicia sesión
+          </button>
         </div>
-    );
+      </form>
+    </div>
+  );
 };
 
 export default Registro;
