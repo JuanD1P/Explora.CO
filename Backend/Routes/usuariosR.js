@@ -91,9 +91,9 @@ router.put('/usuarios/:id/rol', (req, res) => {
     const { id } = req.params;
     const { rol } = req.body;
 
-    if (!['USER', 'ADMIN'].includes(rol)) {
-        return res.status(400).json({ error: "Rol inválido" });
-    }
+    if (!['USER', 'ADMIN', 'EMPRESA'].includes(rol)) {
+  return res.status(400).json({ error: "Rol inválido" });
+}
 
     con.query("UPDATE usuarios SET rol = ? WHERE id = ?", [rol, id], (err, result) => {
         if (err) {
