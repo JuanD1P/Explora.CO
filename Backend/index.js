@@ -25,7 +25,7 @@ const __dirname = path.dirname(__filename);
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Rutas
+
 app.use('/auth', userRouter);
 app.use('/api', imagenesRouter);  
 
