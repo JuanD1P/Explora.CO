@@ -10,6 +10,7 @@ import NotFound from './Components/NotFound';
 import ProtectedRoute from './Components/PrivateRoute';
 import Admin from './Components/Admin';
 import Navbar from './Components/Navbar';
+import InicioEmpresa from './Components/InicioEmpresa';
 
 function App() {
   return (
@@ -28,6 +29,17 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* RUTAS PARA LAS EMPRESAS */}
+          <Route
+            path="/InicioEmpresa"
+            element={
+              <ProtectedRoute allowedRoles={['EMPRESA']}>
+                <InicioEmpresa />
+              </ProtectedRoute>
+            }
+          />
+
 
         {/* RUTAS PARA LOS USUARIOS */}
         <Route element={<LayoutWithNavbar />}>
