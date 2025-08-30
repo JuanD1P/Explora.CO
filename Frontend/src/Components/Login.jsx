@@ -12,10 +12,6 @@ const Login = () => {
     
     localStorage.clear();
 
-    localStorage.removeItem('auth-token');
-    localStorage.removeItem('user-role');
-    localStorage.removeItem('municipioSeleccionado');
-    localStorage.removeItem('fechaSeleccionada');
     const [error, setError] = useState(null);
     const [termsAccepted, setTermsAccepted] = useState(false);
     const navigate = useNavigate();
@@ -48,6 +44,9 @@ const Login = () => {
                     window.location.reload();
                 } else if (result.data.role === 'ADMIN') {
                     navigate('/Admin');
+                    window.location.reload();
+                } else if (result.data.role === 'EMPRESA') {
+                    navigate('/InicioEmpresa');
                     window.location.reload();
                 }
             } else {
