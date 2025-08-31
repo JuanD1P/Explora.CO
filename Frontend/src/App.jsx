@@ -10,6 +10,7 @@ import NotFound from './Components/NotFound';
 import ProtectedRoute from './Components/PrivateRoute';
 import Admin from './Components/Admin';
 import Navbar from './Components/Navbar';
+import Footer from './Components/Footer';
 import InicioEmpresa from './Components/InicioEmpresa';
 import PerfilEmpresa from './Components/PerfilEmpresa.jsx';
 import EventosLugar from './Components/EventosLugar.jsx';
@@ -66,6 +67,7 @@ function App() {
         />
 
         {/* USUARIOS (con Navbar) */}
+        <Route element={<LayoutWithoutFooter />}>
         <Route element={<LayoutWithNavbar />}>
           <Route
             path="/Inicio"
@@ -87,6 +89,7 @@ function App() {
 
 
         </Route>
+        </Route>
 
         {/* 404 */}
         <Route path="*" element={<NotFound />} />
@@ -103,15 +106,25 @@ function App() {
         theme="colored"
       />
     </Router>
+
   );
 }
 
-// Layout con Navbar
+// Layout con Navbar, Footer
 function LayoutWithNavbar() {
   return (
     <>
       <Navbar />
       <Outlet />
+    </>
+  );
+}
+
+function LayoutWithoutFooter() {
+  return (
+    <>
+      <Outlet />
+      <Footer />
     </>
   );
 }
