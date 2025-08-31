@@ -11,16 +11,23 @@ import ProtectedRoute from './Components/PrivateRoute';
 import Admin from './Components/Admin';
 import Navbar from './Components/Navbar';
 import InicioEmpresa from './Components/InicioEmpresa';
+import PerfilEmpresa from './Components/PerfilEmpresa.jsx';
+import EventosLugar from './Components/EventosLugar.jsx';
+import ValoracionesLugar from './Components/ValoracionesLugar.jsx';
+
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Navigate to="/userlogin" />} />
+        {/* Redirección inicial */}
+        <Route path="/" element={<Navigate to="/userlogin" replace />} />
+
+        {/* PÚBLICAS */}
         <Route path="/userlogin" element={<Login />} />
         <Route path="/Registro" element={<Registro />} />
 
-        {/* RUTAS PARA EL ADMINISTRADOR */}
+        {/* ADMIN */}
         <Route
           path="/Admin"
           element={
@@ -30,18 +37,35 @@ function App() {
           }
         />
 
-        {/* RUTAS PARA LAS EMPRESAS */}
-          <Route
-            path="/InicioEmpresa"
-            element={
-              <ProtectedRoute allowedRoles={['EMPRESA']}>
-                <InicioEmpresa />
-              </ProtectedRoute>
-            }
-          />
+        {/* EMPRESAS */}
+        <Route
+          path="/InicioEmpresa"
+          element={
+            <ProtectedRoute allowedRoles={['EMPRESA']}>
+              <InicioEmpresa />
+            </ProtectedRoute>
+          }
+        />
 
+        <Route
+          path="/PerfilEmpresa"
+          element={
+            <ProtectedRoute allowedRoles={['EMPRESA']}>
+              <PerfilEmpresa />
+            </ProtectedRoute>
+          }
+        />
 
-        {/* RUTAS PARA LOS USUARIOS */}
+        <Route
+          path="/EventosLugar"
+          element={
+            <ProtectedRoute allowedRoles={['EMPRESA']}>
+              <EventosLugar />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* USUARIOS (con Navbar) */}
         <Route element={<LayoutWithNavbar />}>
           <Route
             path="/Inicio"
@@ -51,9 +75,20 @@ function App() {
               </ProtectedRoute>
             }
           />
+          
+          <Route
+            path="/ValorarLugar"
+            element={
+            <ProtectedRoute allowedRoles={['USER']}>
+            <ValoracionesLugar />
+            </ProtectedRoute>
+           }
+          />
+
+
         </Route>
 
-        {/* RUTA NO ENCONTRADA */}
+        {/* 404 */}
         <Route path="*" element={<NotFound />} />
       </Routes>
 
@@ -65,13 +100,13 @@ function App() {
         closeOnClick
         pauseOnHover
         draggable
-        theme="colored"  
+        theme="colored"
       />
     </Router>
   );
 }
 
-// Navbar
+// Layout con Navbar
 function LayoutWithNavbar() {
   return (
     <>
