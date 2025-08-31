@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 const API_URL = 'http://localhost:3000';
 
-// ⚠️ reemplaza por el id real del usuario EMPRESA autenticado
 const EMPRESA_ID = 3;
 
 export default function EventosLugar() {
