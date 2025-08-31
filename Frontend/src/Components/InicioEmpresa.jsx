@@ -2,7 +2,6 @@ import React, { useMemo } from "react";
 import { motion } from "framer-motion";
 import "./DOCSS/InicioEmpresa.css";
 import imgDemo from "../ImagenesP/InicioUsuario/ImagenPrueba.png";
-import fondoEmp from "../ImagenesP/ImagenesEmp/fondo_emp.jpg";
 
 const publicacionesDemo = [
   {
