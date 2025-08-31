@@ -104,7 +104,7 @@ const Registro = () => {
 
         <div className={`card-inner ${flip}`}>
           <div className="headerForm">
-            <img src={logo} alt="Logo" className="logoLogin" />
+            <img src={logo} alt="Logo" className="loginlogo" />
             <p>Completa el formulario ({values.rol === 'EMPRESA' ? 'empresa' : 'usuario'})</p>
           </div>
 

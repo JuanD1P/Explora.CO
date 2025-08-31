@@ -1,23 +1,34 @@
+
 import React, { useMemo } from "react";
 import "./DOCSS/Inicio.css";
 import imgDemo from "../ImagenesP/InicioUsuario/ImagenPrueba.png";
 
 import { motion } from "framer-motion";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay, Pagination, Navigation, EffectFade } from "swiper/modules";
+import {
+  Autoplay,
+  Pagination,
+  Navigation,
+  EffectFade,
+  EffectCoverflow,
+  A11y,
+  Keyboard,
+} from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/navigation";
 import "swiper/css/effect-fade";
+import "swiper/css/effect-coverflow";
 
 const Inicio = () => {
+
   const categorias = [
     { id: "naturaleza",  titulo: "Naturaleza",  href: "/1" },
     { id: "cultura",     titulo: "Cultura",     href: "/2" },
     { id: "gastronomia", titulo: "Gastronomía", href: "/3" },
-    { id: "recreativo",    titulo: "Recreativo",    href: "/4" },
+    { id: "recreativo",  titulo: "Recreativo",  href: "/4" },
     { id: "historia",    titulo: "Historia",    href: "/5" },
-    { id: "arqueologicos",       titulo: "Arqueologicos",   href: "/6" },
+    { id: "arqueologicos", titulo: "Arqueológicos", href: "/6" },
   ];
   const departamentos = [
     "Amazonas","Antioquia","Arauca","Atlántico","Bolívar","Boyacá","Caldas","Caquetá","Casanare","Cauca",
@@ -29,6 +40,7 @@ const Inicio = () => {
     s.toLowerCase()
       .replace(/á/g,"a").replace(/é/g,"e").replace(/í/g,"i").replace(/ó/g,"o").replace(/ú/g,"u").replace(/ñ/g,"n")
       .replace(/\s+/g,"-");
+
 
   const { heroImgs, catImgs, depImgs } = useMemo(() => {
     const heroImgs = [
@@ -43,17 +55,19 @@ const Inicio = () => {
     return { heroImgs, catImgs, depImgs };
   }, []);
 
-  const onImgError = (e) => { e.currentTarget.src = imgDemo; e.currentTarget.onerror = null; };
 
+  const onImgError = (e) => { e.currentTarget.src = imgDemo; e.currentTarget.onerror = null; };
   const fadeUp = { hidden: { y: 16, opacity: 0 }, show: { y: 0, opacity: 1 } };
 
   return (
-    <main className="ini-root">
+    <main className="ini-root" role="main">
+
       <div aria-hidden className="ini-hero-bg">
         <span className="ini-bg-bubble b1" />
         <span className="ini-bg-bubble b2" />
         <span className="ini-bg-bubble b3" />
       </div>
+
 
       <section className="ini-intro">
         <motion.div
@@ -61,36 +75,41 @@ const Inicio = () => {
           variants={fadeUp}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, amount: .4 }}
-          transition={{ duration: .6, ease: "easeOut" }}
+          viewport={{ once: true, amount: .35 }}
+          transition={{ duration: .5, ease: "easeOut" }}
         >
           <h1 className="ini-title">Explora.CO</h1>
           <h2 className="ini-h2">Descubre Colombia</h2>
           <p>
-            Encuentra lugares increíbles con fotos, descripciones, mapas y reseñas reales. Filtra por{" "}
-            <em>naturaleza</em>, <em>cultura</em>, <em>gastronomía</em> y <em>aventura</em>.
+            Encuentra lugares increíbles con fotos, descripciones, mapas y reseñas reales. Filtra por
+            <em> naturaleza</em>, <em> cultura</em>, <em> gastronomía</em> y <em> aventura</em>.
           </p>
-          <p className="ini-muted">
-            Hecho para viajeros, operadores y entidades — todo en una sola experiencia.
-          </p>
+          <p className="ini-muted">Hecho para viajeros, operadores y entidades — todo en una sola experiencia.</p>
         </motion.div>
 
         <motion.div
           className="ini-hero card-3d"
-          initial={{ scale: .985, opacity: 0 }}
+          initial={{ scale: .99, opacity: 0 }}
           whileInView={{ scale: 1, opacity: 1 }}
-          viewport={{ once: true, amount: .4 }}
-          transition={{ duration: .6, ease: "easeOut" }}
+          viewport={{ once: true, amount: .35 }}
+          transition={{ duration: .5, ease: "easeOut" }}
         >
+          <div className="ini-hero__parallax">
+            <span className="parallax p1" />
+            <span className="parallax p2" />
+          </div>
+
           <Swiper
             className="ini-hero-swiper"
-            modules={[Autoplay, Pagination, Navigation, EffectFade]}
+            modules={[Autoplay, Pagination, Navigation, EffectFade, A11y, Keyboard]}
             effect="fade"
             speed={900}
             loop
             autoplay={{ delay: 4200, disableOnInteraction: false, pauseOnMouseEnter: true }}
             navigation
+            keyboard
             pagination={{ clickable: true }}
+            a11y={{ prevSlideMessage: "Anterior", nextSlideMessage: "Siguiente" }}
             aria-label="Galería principal"
           >
             {heroImgs.map((src, i) => (
@@ -100,9 +119,11 @@ const Inicio = () => {
                   onError={onImgError}
                   alt={`Imagen destacada ${i + 1}`}
                   className="ini-hero__img"
-                  initial={{ scale: 1.04 }}
-                  animate={{ scale: 1.08 }}
-                  transition={{ duration: 7, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+                  decoding="async"
+                  loading="eager"
+                  initial={{ scale: 1.015 }}
+                  animate={{ scale: 1.055 }}
+                  transition={{ duration: 9, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
                 />
               </SwiperSlide>
             ))}
@@ -110,6 +131,7 @@ const Inicio = () => {
         </motion.div>
       </section>
 
+      {/* ===== ¿QUÉ PUEDES HACER? ===== */}
       <section className="ini-section">
         <div className="ini-section__head">
           <h3>¿Qué puedes hacer?</h3>
@@ -120,22 +142,21 @@ const Inicio = () => {
           {/* Toda Colombia */}
           <li className="ini-action hover-raise" tabIndex={0}>
             <div className="ini-illu">
-              <svg viewBox="0 0 160 120" className="illu">
+              <svg viewBox="0 0 160 120" className="illu" aria-hidden>
                 <defs>
                   <linearGradient id="glow" x1="0" x2="1">
                     <stop offset="0" stopColor="#0ea5e9"/>
                     <stop offset="1" stopColor="#0369a1"/>
                   </linearGradient>
                 </defs>
-                <path d="M15 75c0-28 24-50 60-50s70 22 70 50-30 32-66 32-64-4-64-32z"
-                      fill="url(#glow)" opacity=".12"/>
+                <path d="M15 75c0-28 24-50 60-50s70 22 70 50-30 32-66 32-64-4-64-32z" fill="url(#glow)" opacity=".12"/>
                 <g stroke="#0b2f4a" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M60 84c-10-6-16-17-16-29 0-19 15-34 34-34s34 15 34 34c0 12-6 23-16 29" opacity=".3"/>
                   <circle cx="78" cy="56" r="6"/>
                   <path d="M78 62v20"/>
                 </g>
                 <path d="M108 24v58" stroke="#0b2f4a" strokeWidth="3" strokeLinecap="round"/>
-                <g transform="translate(109 28)">
+                <g transform="translate(109 28)" aria-label="Bandera de Colombia">
                   <path className="flag f1" d="M0 0 C18 4, 28 -4, 44 2 L44 12 C28 6, 18 14, 0 10 Z" fill="#FCD116"/>
                   <path className="flag f2" d="M0 10 C18 14, 28 6, 44 12 L44 20 C28 14, 18 22, 0 18 Z" fill="#0038A8"/>
                   <path className="flag f3" d="M0 18 C18 22, 28 14, 44 20 L44 28 C28 22, 18 30, 0 26 Z" fill="#CE1126"/>
@@ -151,7 +172,7 @@ const Inicio = () => {
           {/* Busca rápido */}
           <li className="ini-action hover-raise" tabIndex={0}>
             <div className="ini-illu illu--blue">
-              <svg viewBox="0 0 160 120" className="illu">
+              <svg viewBox="0 0 160 120" className="illu" aria-hidden>
                 <path d="M15 75c0-28 24-50 60-50s70 22 70 50-30 32-66 32-64-4-64-32z" fill="#0ea5e9" opacity=".12"/>
                 <g stroke="#0b2f4a" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="30" y="30" width="60" height="40" rx="6"/>
@@ -170,7 +191,7 @@ const Inicio = () => {
           {/* Compara con confianza */}
           <li className="ini-action hover-raise" tabIndex={0}>
             <div className="ini-illu illu--gold">
-              <svg viewBox="0 0 160 120" className="illu">
+              <svg viewBox="0 0 160 120" className="illu" aria-hidden>
                 <path d="M15 75c0-28 24-50 60-50s70 22 70 50-30 32-66 32-64-4-64-32z" fill="#E7C46A" opacity=".15"/>
                 <g stroke="#0b2f4a" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="28" y="28" width="48" height="60" rx="8"/>
@@ -190,7 +211,7 @@ const Inicio = () => {
           {/* Ahorra a lo grande */}
           <li className="ini-action hover-raise" tabIndex={0}>
             <div className="ini-illu illu--rose">
-              <svg viewBox="0 0 160 120" className="illu">
+              <svg viewBox="0 0 160 120" className="illu" aria-hidden>
                 <path d="M15 75c0-28 24-50 60-50s70 22 70 50-30 32-66 32-64-4-64-32z" fill="#f43f5e" opacity=".12"/>
                 <g stroke="#0b2f4a" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="36" y="50" width="88" height="24" rx="6"/>
@@ -210,7 +231,7 @@ const Inicio = () => {
           {/* Rutas y mapas */}
           <li className="ini-action hover-raise" tabIndex={0}>
             <div className="ini-illu illu--green">
-              <svg viewBox="0 0 160 120" className="illu">
+              <svg viewBox="0 0 160 120" className="illu" aria-hidden>
                 <path d="M15 75c0-28 24-50 60-50s70 22 70 50-30 32-66 32-64-4-64-32z" fill="#10b981" opacity=".12"/>
                 <g stroke="#0b2f4a" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M40 88c16-24 32-24 48-12s24 12 36 4" />
@@ -227,9 +248,10 @@ const Inicio = () => {
             </div>
           </li>
 
+          {/* Reseñas */}
           <li className="ini-action hover-raise" tabIndex={0}>
             <div className="ini-illu illu--purple">
-              <svg viewBox="0 0 160 120" className="illu">
+              <svg viewBox="0 0 160 120" className="illu" aria-hidden>
                 <path d="M15 75c0-28 24-50 60-50s70 22 70 50-30 32-66 32-64-4-64-32z" fill="#8b5cf6" opacity=".12"/>
                 <g stroke="#0b2f4a" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="28" y="36" width="104" height="48" rx="10"/>
@@ -248,6 +270,7 @@ const Inicio = () => {
         </ul>
       </section>
 
+      {/* ===== CATEGORÍAS ===== */}
       <section className="ini-section">
         <div className="ini-section__head">
           <h3>Categorías</h3>
@@ -256,10 +279,11 @@ const Inicio = () => {
 
         <div className="ini-carousel glass">
           <Swiper
-            modules={[Autoplay, Pagination, Navigation]}
+            modules={[Autoplay, Pagination, Navigation, A11y, Keyboard]}
             loop
             autoplay={{ delay: 3500, disableOnInteraction: false, pauseOnMouseEnter: true }}
             navigation
+            keyboard
             pagination={{ clickable: true }}
             spaceBetween={16}
             slidesPerView={1.2}
@@ -270,7 +294,8 @@ const Inicio = () => {
               <SwiperSlide key={c.id}>
                 <a href={c.href} className="ini-card hover-raise" aria-label={c.titulo}>
                   <div className="ini-thumb">
-                    <img src={catImgs[idx]} onError={onImgError} alt={c.titulo} loading="lazy" />
+                    <img src={catImgs[idx]} onError={onImgError} alt={c.titulo} loading="lazy" decoding="async" />
+                    <span className="shine" aria-hidden />
                   </div>
                   <span>{c.titulo}</span>
                 </a>
@@ -280,21 +305,18 @@ const Inicio = () => {
         </div>
       </section>
 
-
+      {/* ===== BANNER ===== */}
       <motion.section
         className="ini-banner card-3d"
         initial={{ y: 14, opacity: 0 }}
         whileInView={{ y: 0, opacity: 1 }}
-        viewport={{ once: true, amount: .4 }}
-        transition={{ duration: .55, ease: "easeOut" }}
+        viewport={{ once: true, amount: .35 }}
+        transition={{ duration: .5, ease: "easeOut" }}
       >
         <img src="/ImagenesP/Banners/elige-destino.jpg" onError={onImgError} alt="Banner informativo" />
-        <div className="ini-banner__overlay">
-          <h3>Comienza seleccionando el lugar de Colombia al que quieres ir</h3>
-        </div>
       </motion.section>
 
-      {/* ===================== DEPARTAMENTOS  ===================== */}
+      {/* ===== DEPARTAMENTOS  ===== */}
       <section className="ini-section" aria-labelledby="deps-title">
         <div className="ini-section__head">
           <h3 id="deps-title">Departamentos</h3>
@@ -302,24 +324,19 @@ const Inicio = () => {
         </div>
 
         <div className="deps-wrap glass">
-          <div className="deps-progress" role="progressbar" aria-label="Progreso carrusel" aria-valuemin={0} aria-valuemax={100}>
-            <span className="deps-progress__bar" id="depsProgressBar" />
-          </div>
-
           <Swiper
             className="deps-swiper"
-            modules={[Autoplay, Pagination, Navigation]}
+            modules={[Autoplay, Pagination, Navigation, EffectCoverflow, A11y, Keyboard]}
+            effect="coverflow"
+            coverflowEffect={{ rotate: 10, stretch: 20, depth: 120, modifier: 1, slideShadows: false }}
             loop
             centeredSlides
             slidesPerView={1.15}
             spaceBetween={16}
             speed={700}
-            autoplay={{ delay: 3800, disableOnInteraction: false, pauseOnMouseEnter: true }}
+            autoplay={{ delay: 3600, disableOnInteraction: false, pauseOnMouseEnter: true }}
             navigation={{ nextEl: ".deps-nav--next", prevEl: ".deps-nav--prev" }}
-            onAutoplayTimeLeft={(_, time, progress) => {
-              const bar = document.getElementById("depsProgressBar");
-
-            }}
+            keyboard
             breakpoints={{
               520:  { slidesPerView: 1.5, spaceBetween: 18 },
               900:  { slidesPerView: 2.5, spaceBetween: 20 },
@@ -336,12 +353,21 @@ const Inicio = () => {
                   <a href={`/departamentos/${slug}`} className="dep-card" aria-label={`Ver destinos en ${d}`}>
                     <span className="dep-card__border" aria-hidden />
                     <div className="dep-card__media">
-                      <img src={src} onError={onImgError} alt={d} loading="lazy" className="dep-card__img" />
+                      <img
+                        src={src}
+                        onError={onImgError}
+                        alt={d}
+                        loading="lazy"
+                        decoding="async"
+                        className="dep-card__img"
+                      />
                       <span className="dep-card__skeleton" aria-hidden />
                       <span className="dep-chip">Explorar</span>
+                      <span className="shine" aria-hidden />
                     </div>
                     <div className="dep-card__foot">
                       <h4 className="dep-card__title">{d}</h4>
+                      <span className="dep-card__cta" aria-hidden></span>
                     </div>
                   </a>
                 </SwiperSlide>
@@ -351,8 +377,6 @@ const Inicio = () => {
 
           <button className="deps-nav deps-nav--prev" aria-label="Anterior" tabIndex={0}>‹</button>
           <button className="deps-nav deps-nav--next" aria-label="Siguiente" tabIndex={0}>›</button>
-
-          <small id="depsProgressText" className="deps-progress__time" aria-hidden="true"></small>
         </div>
       </section>
     </main>

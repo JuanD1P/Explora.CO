@@ -64,7 +64,7 @@ const Login = () => {
     return (
         <div className="login-container">
   <div className="login-card">
-    <img src={logo} alt="Logo" className="login-logo" />
+    <img src={logo} alt="Logo" className="loginlogo" />
     
     <div className={`login-error ${error ? 'show' : ''}`}>
       {error && error}

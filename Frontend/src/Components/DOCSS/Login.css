@@ -22,9 +22,11 @@
   animation: fadeIn .25s ease both;
 }
 
-.login-logo {
+.loginlogo{
   width: 50%;
   margin-bottom: 14px;
+  margin: 0 auto 20px auto; 
+
 }
 
 
