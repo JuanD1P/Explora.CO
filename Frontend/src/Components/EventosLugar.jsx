@@ -14,7 +14,7 @@ export default function EventosLugar() {
   const [fotoPrincipalPreview, setFotoPrincipalPreview] = useState(null);
   const principalInputRef = useRef(null);
 
-  const [fotosExtra, setFotosExtra] = useState([]); // {file, preview}[]
+  const [fotosExtra, setFotosExtra] = useState([]); 
   const addExtraInputRef = useRef(null);
 
   const [enviando, setEnviando] = useState(false);

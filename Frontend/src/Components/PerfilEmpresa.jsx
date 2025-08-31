@@ -39,17 +39,17 @@ const PerfilEmpresa = () => {
   const [direccion, setDireccion] = useState('');
 
   // Horarios / precios
-  const [horarioDesde, setHorarioDesde] = useState('');   // "HH:MM"
-  const [horarioHasta, setHorarioHasta] = useState('');   // "HH:MM"
+  const [horarioDesde, setHorarioDesde] = useState('');   
+  const [horarioHasta, setHorarioHasta] = useState('');   
   const [moneda, setMoneda] = useState('COP');
-  const [precioDesde, setPrecioDesde] = useState('');     // string numérica
-  const [precioHasta, setPrecioHasta] = useState('');     // string numérica
+  const [precioDesde, setPrecioDesde] = useState('');    
+  const [precioHasta, setPrecioHasta] = useState('');     
   const [infoPrecios, setInfoPrecios] = useState('');
 
   // Fotos del lugar
   const [fotoPrincipal, setFotoPrincipal] = useState(null);
   const [fotoPrincipalPreview, setFotoPrincipalPreview] = useState(null);
-  const [fotosExtra, setFotosExtra] = useState([]); // [{file, preview}]
+  const [fotosExtra, setFotosExtra] = useState([]); 
   const addExtraInputRef = useRef(null);
   const principalInputRef = useRef(null);
 
@@ -114,7 +114,7 @@ const PerfilEmpresa = () => {
     const f = e.target.files?.[0] || null;
     if (!f) return;
     setFotosExtra((prev) => [...prev, { file: f, preview: URL.createObjectURL(f) }]);
-    e.target.value = ''; // permite volver a elegir el mismo archivo si se quiere
+    e.target.value = '';
   };
 
   const removeExtraAt = (idx) => {
@@ -215,7 +215,7 @@ const PerfilEmpresa = () => {
     formData.append('empresa_id', String(EMPRESA_ID));
     formData.append('nombre_lugar', nombreLugar);
     formData.append('categoria', categoria);
-    formData.append('descripcion', descripcion); // se guarda (no se muestra en la lista)
+    formData.append('descripcion', descripcion); 
     formData.append('ciudad', ciudad);
     formData.append('direccion', direccion);
     formData.append('lat', String(loc.lat));

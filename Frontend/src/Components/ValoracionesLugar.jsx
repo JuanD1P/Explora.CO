@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 const API_URL = 'http://localhost:3000';
 
-// ⚠️ reemplaza por el id real del usuario autenticado (rol USER)
 const USER_ID = 8;
 
 export default function ValoracionesLugar() {
