@@ -1,0 +1,223 @@
+/* ==================== BASE / VARIABLES (LIGHT + MORADO) ==================== */
+:root{
+  /* Paleta base clara */
+  --emp-bg: #ffffff;          /* fondo base blanco */
+  --emp-surface: #ffffff;     /* superficies (navbar, tarjetas) */
+  --emp-card: #ffffff;
+
+  /* Acentos morados */
+  --emp-accent: #5a2dbf;      /* morado principal */
+  --emp-accent-2: #4a23a3;    /* morado más oscuro para hover */
+  --emp-accent-10: rgba(90,45,191,.10); /* veladuras/hover suaves */
+  --emp-accent-06: rgba(90,45,191,.06);
+
+  /* Bordes y textos */
+  --emp-border: #e8e3f9;      /* lavanda muy clara para bordes */
+  --emp-text: #1f2937;        /* gris oscuro legible sobre blanco */
+  --emp-muted: #6b7280;       /* gris medio para secundarios */
+
+  /* Botones gradiente (ligero) */
+  --emp-primary: var(--emp-accent);
+  --emp-primary-2: #6b3ad8;
+
+  /* Glass soft */
+  --emp-glass: rgba(90,45,191,.06);
+
+  /* Alto navbar */
+  --emp-nav-h: 64px;
+}
+
+.emp-root{
+  min-height: 100dvh;
+  color: var(--emp-text);
+  background: url("../ImagenesP/ImagenesEmp/fondoEmp.jpg") center/cover no-repeat;
+}
+
+
+
+* { box-sizing: border-box }
+img { display: block; max-width: 100% }
+
+.emp-header{
+  max-width: 1200px;
+  margin: 10px auto 22px;     /* separación arriba/abajo */
+  padding: 10px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--emp-border);
+  background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.86)); /* efecto glass suave */
+  backdrop-filter: blur(8px);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  box-shadow: 0 8px 24px rgba(17,24,39,.08), inset 0 1px 0 rgba(255,255,255,.7);
+}
+
+/* Marca */
+.emp-brand{
+  display:flex; align-items:center; gap:.6rem;
+  color: var(--emp-accent);
+  text-decoration: none;
+  font-size: 1.06rem;
+  font-weight: 700;
+}
+.emp-logo{ font-size: 1.25rem }
+
+/* Navegación */
+.emp-nav{ display:flex; align-items:center; gap:1rem }
+.emp-link{
+  color: var(--emp-muted);
+  text-decoration: none;
+  padding: 10px 12px;
+  border-radius: 12px;
+  line-height: 1;
+  border: 1px solid transparent;
+  transition: background .2s ease, color .2s ease, border-color .2s ease;
+}
+.emp-link:hover{
+  color: var(--emp-accent);
+  background: var(--emp-accent-06);
+  border-color: var(--emp-border);
+}
+/* Estado activo (si usas <NavLink>) */
+.emp-link.active{
+  color: #fff;
+  background: linear-gradient(180deg, var(--emp-primary), var(--emp-primary-2));
+  border-color: rgba(90,45,191,.35);
+  box-shadow: 0 6px 16px rgba(90,45,191,.25);
+}
+
+/* Avatar */
+.emp-avatar{
+  margin-left:.35rem;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--emp-border);
+  background: var(--emp-surface);
+  color: var(--emp-accent);
+  display:grid; place-items:center;
+  cursor:pointer;
+  transition: background .2s ease, transform .2s ease, color .2s ease;
+}
+.emp-avatar:hover{ background: var(--emp-accent-06); color: var(--emp-accent); transform: translateY(-1px) }
+
+/* Responsive */
+@media (max-width: 900px){
+  .emp-header{
+    grid-template-columns: 1fr;
+    row-gap: 8px;
+    text-align: left;
+  }
+  .emp-nav{ justify-content: space-between; flex-wrap: wrap }
+}
+
+/* ==================== LAYOUT / UTILIDADES ==================== */
+
+.glass{
+  background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.86));
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--emp-border);
+  border-radius: 16px;
+}
+.card-3d{
+  box-shadow: 0 10px 30px rgba(17,24,39,.10), inset 0 1px 0 rgba(255,255,255,.7);
+  border-radius: 18px;
+}
+.hover-raise{ transition: transform .2s ease, box-shadow .2s ease }
+.hover-raise:hover{ transform: translateY(-2px) }
+
+/* ==================== HERO ACCIONES ==================== */
+.emp-hero{
+  max-width: 1200px; margin: 0 auto 28px;
+  background: linear-gradient(180deg, rgba(90,45,191,.06), rgba(255,255,255,1));
+  border: 1px solid var(--emp-border);
+  padding: 36px 28px 40px;
+  text-align: center;
+}
+.emp-cta{ display:flex; flex-direction:column; align-items:center; gap:10px }
+.emp-create-btn{
+  display:flex; align-items:center; gap:12px;background-attachment: scroll, scroll, fixed;
+  border: 1px solid rgba(90,45,191,.35);
+  background: linear-gradient(180deg, var(--emp-primary), var(--emp-primary-2));
+  color:#fff; padding: 10px 16px; border-radius: 999px;
+  font-weight: 600; cursor: pointer;
+  box-shadow: 0 10px 24px rgba(90,45,191,.28);
+}
+.emp-create-btn:hover{ 
+    filter: brightness(1.05);
+    background: #4a23a3;
+}
+.emp-plus{ width: 40px; height: 40px; color: #fff }
+.emp-hero-title{
+  margin-top: 4px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: .2px;
+  color: var(--emp-accent);
+}
+.emp-secondary-btn{
+  display:inline-block;
+  margin-top: 2px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--emp-border);
+  color: var(--emp-accent);
+  text-decoration: none;
+  background: #fff;
+}
+.emp-secondary-btn:hover{ background: var(--emp-accent-06) }
+
+/* ==================== SECCIONES / GRID ==================== */
+.emp-section{ max-width: 1200px; margin: 0 auto 34px; padding: 0 4px }
+.emp-section__head{ margin: 12px 6px 16px }
+.emp-section__head h3{ margin:0 0 4px; font-size:1.2rem; color: var(--emp-accent) }
+.emp-section__head p{ margin:0; color: var(--emp-muted) }
+
+.emp-grid{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+@media (min-width: 1280px){
+  .emp-grid{ grid-template-columns: repeat(4, 1fr) }
+}
+
+/* ==================== CARD PUBLICACIÓN ==================== */
+.emp-card{
+  border: 1px solid var(--emp-border);
+  background: var(--emp-card);
+  border-radius: 14px;
+  overflow: hidden;
+  display:flex; flex-direction: column;
+}
+.emp-card__media img{
+  width: 100%; height: 180px; object-fit: cover;
+  background: #f3f4f6;
+}
+.emp-card__body{ padding: 12px 12px 6px }
+.emp-card__title{ margin: 0 0 6px; font-size: 1rem; color: var(--emp-text) }
+.emp-card__desc{ margin: 0; color: var(--emp-muted); font-size: .92rem }
+
+.emp-card__actions{
+  display:flex; gap:8px; padding: 10px 10px 12px; margin-top:auto;
+}
+.icon-btn{
+  width: 36px; height: 36px; border-radius: 10px;
+  border: 1px solid var(--emp-border);
+  background: #fff;
+  color: var(--emp-accent);
+  display:grid; place-items:center; cursor:pointer;
+  transition: background .2s ease, color .2s ease, border-color .2s ease;
+}
+.icon-btn:hover{ background: var(--emp-accent-06); border-color: rgba(90,45,191,.25) }
+.icon-btn svg{ width: 18px; height: 18px }
+
+/* ==================== FOOTER ==================== */
+.emp-footer{
+  width: 100%;
+  max-width: none;            /* << quitamos el límite de 1200 */
+  margin: 40px 0 0;
+  padding: 12px 16px;
+  color: #2b2a67;
+  text-align: center;
+  box-shadow: 0 -1px 0 var(--emp-border);
+}
