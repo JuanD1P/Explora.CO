@@ -22,7 +22,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Redirección inicial */}
+
         <Route path="/" element={<Navigate to="/userlogin" replace />} />
 
         {/* PÚBLICAS */}
