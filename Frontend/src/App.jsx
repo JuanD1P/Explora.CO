@@ -15,6 +15,7 @@ import InicioEmpresa from './Components/InicioEmpresa';
 import PerfilEmpresa from './Components/PerfilEmpresa.jsx';
 import EventosLugar from './Components/EventosLugar.jsx';
 import ValoracionesLugar from './Components/ValoracionesLugar.jsx';
+import Departamentos from './Components/Departamentos.jsx';
 
 
 function App() {
@@ -83,6 +84,14 @@ function App() {
             element={
             <ProtectedRoute allowedRoles={['USER']}>
             <ValoracionesLugar />
+            </ProtectedRoute>
+           }
+          />
+          <Route
+            path="/departamentos/:slug"
+            element={
+            <ProtectedRoute allowedRoles={['USER']}>
+            <Departamentos />
             </ProtectedRoute>
            }
           />
