@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../ImagenesP/InicioUsuario/LOGOFOOTER.png";
-import "./DOCSS/Navbar.css"; // Archivo CSS para estilos
+import "./DOCSS/Navbar.css";
+
+
+const COL_JSON =
+  "https://raw.githubusercontent.com/marcovega/colombia-json/master/colombia.min.json";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -9,55 +13,50 @@ const Navbar = () => {
   const [municipios, setMunicipios] = useState([]);
   const [departamentoSeleccionado, setDepartamentoSeleccionado] = useState("");
   const [municipioSeleccionado, setMunicipioSeleccionado] = useState("");
+  const [dataColombia, setDataColombia] = useState([]); 
 
-  // 👉 Aquí integrarás la API para cargar los departamentos
+  // 🔹 Cargar todos los departamentos desde la API
   useEffect(() => {
-    // Ejemplo actual (simulación)
-    setDepartamentos(["Cundinamarca", "Antioquia", "Valle del Cauca"]);
-
-    // Cuando integres la API, reemplaza lo de arriba por:
-    /*
-    fetch("URL_DE_LA_API")
-      .then((res) => res.json())
-      .then((data) => {
-        const listaDepartamentos = [...new Set(data.map(item => item.departamento))].sort();
+    (async () => {
+      try {
+        const res = await fetch(COL_JSON);
+        const data = await res.json(); 
+        setDataColombia(data);
+        const listaDepartamentos = data
+          .map((d) => d.departamento)
+          .sort((a, b) => a.localeCompare(b, "es"));
         setDepartamentos(listaDepartamentos);
-      })
-      .catch(err => console.error("Error al cargar departamentos:", err));
-    */
+      } catch (err) {
+        console.error("Error al cargar departamentos:", err);
+      }
+    })();
   }, []);
 
-  // 👉 Aquí integrarás la API para cargar los municipios según el departamento seleccionado
+  // 🔹 Cargar municipios según el departamento seleccionado
   useEffect(() => {
-    if (departamentoSeleccionado === "Cundinamarca") {
-      setMunicipios(["Facatativá", "Bogotá", "Soacha"]);
-    } else if (departamentoSeleccionado === "Antioquia") {
-      setMunicipios(["Medellín", "Envigado", "Bello"]);
-    } else if (departamentoSeleccionado === "Valle del Cauca") {
-      setMunicipios(["Cali", "Palmira", "Buenaventura"]);
+    if (!departamentoSeleccionado) {
+      setMunicipios([]);
+      return;
+    }
+
+    const depto = dataColombia.find(
+      (d) => d.departamento === departamentoSeleccionado
+    );
+    if (depto) {
+      const listaMunicipios = [...depto.ciudades].sort((a, b) =>
+        a.localeCompare(b, "es")
+      );
+      setMunicipios(listaMunicipios);
     } else {
       setMunicipios([]);
-
-      // Cuando integres la API, reemplaza lo de arriba por:
-      /*
-      fetch("URL_DE_LA_API")
-        .then((res) => res.json())
-        .then((data) => {
-          const listaMunicipios = data
-            .filter(item => item.departamento === departamentoSeleccionado)
-            .map(item => item.municipio)
-            .sort();
-          setMunicipios(listaMunicipios);
-        })
-        .catch(err => console.error("Error al cargar municipios:", err));
-      */
     }
-  }, [departamentoSeleccionado]);
+  }, [departamentoSeleccionado, dataColombia]);
 
   const handleLogout = () => {
-    navigate("/login");
+    navigate("/userlogin");
   };
 
+  // 🔹 Acción de búsqueda
   const handleSearch = () => {
     if (departamentoSeleccionado && municipioSeleccionado) {
       alert(
@@ -72,15 +71,19 @@ const Navbar = () => {
     <header className="nv">
       <div className="nv__inner">
         {/* Logo */}
-        <div className="nv__logoWrap">
+        <div className="nv__logoWrap" onClick={() => navigate("/Inicio")}>
           <img src={logo} alt="Explora.CO" className="nv__logo" />
         </div>
 
         {/* Selectores */}
         <div className="nv__selectors">
+          {/* Departamentos */}
           <select
             value={departamentoSeleccionado}
-            onChange={(e) => setDepartamentoSeleccionado(e.target.value)}
+            onChange={(e) => {
+              setDepartamentoSeleccionado(e.target.value);
+              setMunicipioSeleccionado(""); 
+            }}
             className="nv__select"
           >
             <option value="">Departamento</option>
@@ -91,6 +94,7 @@ const Navbar = () => {
             ))}
           </select>
 
+          {/* Municipios */}
           <select
             value={municipioSeleccionado}
             onChange={(e) => setMunicipioSeleccionado(e.target.value)}
