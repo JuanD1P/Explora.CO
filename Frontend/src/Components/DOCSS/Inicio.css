@@ -18,9 +18,6 @@ img{max-width:100%;display:block}
 .b1{ width: 32vw; height: 32vw; left: -10vw; top: -8vw; background: #cbeaff; animation: float1 16s ease-in-out infinite }
 .b2{ width: 28vw; height: 28vw; right: -8vw; top: 12vh; background: #d6ffe7; animation: float2 20s ease-in-out infinite }
 .b3{ width: 36vw; height: 36vw; left: 18vw; bottom: -14vh; background: #ffe9cf; animation: float3 18s ease-in-out infinite }
-@keyframes float1{ 50%{ transform: translate(2vw, 1vh) } }
-@keyframes float2{ 50%{ transform: translate(-2vw, -1vh) } }
-@keyframes float3{ 50%{ transform: translate(1vw, -2vh) } }
 
 
 .ini-root{ background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding: 24px 16px 56px }
@@ -48,8 +45,7 @@ img{max-width:100%;display:block}
 .ini-hero__parallax .parallax{ position:absolute; border-radius: 999px; filter: blur(40px); opacity:.22; transform: translate3d(0,0,0) }
 .parallax.p1{ width:38vw; height:38vw; left:-10vw; top:-6vw; background:#bfe7ff; animation: pfloat1 20s ease-in-out infinite }
 .parallax.p2{ width:28vw; height:28vw; right:-6vw; bottom:-10vh; background:#ffe5c9; animation: pfloat2 22s ease-in-out infinite }
-@keyframes pfloat1{ 50%{ transform: translate(1.5vw, .6vh) } }
-@keyframes pfloat2{ 50%{ transform: translate(-1.2vw, -1vh) } }
+
 
 .ini-hero .swiper-button-next, .ini-hero .swiper-button-prev{
   width: 42px; height: 42px; border-radius: 999px;
@@ -170,37 +166,5 @@ img{max-width:100%;display:block}
   background: linear-gradient(90deg, rgba(255,255,255,.0), rgba(255,255,255,.45), rgba(255,255,255,.0));
   transform: translateX(-100%); animation: depShimmer 1.2s linear infinite; pointer-events:none;
 }
-@keyframes depShimmer{ to{ transform: translateX(100%) } }
 
-
-.dep-card__media .shine{ position:absolute; inset:0; background: linear-gradient(85deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.55) 50%, rgba(255,255,255,0) 100%); transform: translateX(-130%); }
-.dep-card:hover .shine{ animation: shineSweep .9s ease forwards }
-
-.dep-chip{
-  position:absolute; top:10px; left:10px;
-  background: linear-gradient(90deg, #f5fdff, #ffffff);
-  color:#0a4b78; border:1px solid #cfe6fb; border-radius:999px;
-  padding:6px 10px; font-weight:800; font-size:12px; letter-spacing:.3px;
-  box-shadow: 0 6px 18px rgba(14,165,233,.18);
-}
-.dep-card__foot{ display:flex; align-items:center; justify-content: space-between; gap: 10px; padding: 10px 12px 12px }
-.dep-card__title{ margin:0; font-size: clamp(14px, 1.6vw, 18px); font-weight: 900; color:#0b2f4a }
-.dep-card__cta{ font-weight: 900; color:#0a4b78; opacity:.85; transition: transform .15s ease, color .2s ease }
-.dep-card:hover .dep-card__cta{ transform: translateX(3px); color:#0369a1 }
-
-
-@media (max-width: 1100px){ .ini-intro{ grid-template-columns: 1fr } }
-@media (max-width: 900px){ .ini-actions{ grid-template-columns: repeat(2, minmax(0,1fr)) } }
-@media (max-width: 560px){
-  .ini-root{ padding: 18px 10px 44px }
-  .ini-actions{ grid-template-columns: 1fr }
-  .ini-illu{ width:100px; height:100px }
-  .ini-action{ grid-template-columns: 100px 1fr }
-  .ini-banner img{ height: 220px }
-}
-
-
-:focus-visible{ outline: 3px solid rgba(14,165,233,.28); outline-offset: 2px }
-@media (prefers-reduced-motion: reduce){
-  .hover-raise, .ini-thumb img, .flag, .dep-card__img, .dep-card__border, .deps-progress__bar, .shine, .parallax { transition: none !important; animation: none !important }
-}
+.ini-hero__img { will-change: transform; }
