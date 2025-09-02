@@ -262,4 +262,168 @@ router.get('/perfiles/:id', async (req, res) => {
   }
 });
 
+/**
+ * PUT /api/perfiles/:id
+ * - Actualiza los campos del perfil.
+ * - Puedes subir fotos nuevas (fotos[]) y opcionalmente eliminar algunas existentes con remove_foto_ids (array de ids).
+ *
+ * form-data:
+ *  - nombre_lugar, categoria, descripcion, ciudad, direccion, lat, lng
+ *  - horario_desde, horario_hasta, moneda, precio_desde, precio_hasta, info_precios
+ *  - fotos[] (opcionales)
+ *  - remove_foto_ids (JSON string: "[1,2,3]") opcional
+ */
+router.put('/perfiles/:id', upload.array('fotos', 10), async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ error: 'id inválido' });
+
+    const [exists] = await conn.query('SELECT * FROM perfilempresa WHERE id = ?', [id]);
+    if (!exists.length) return res.status(404).json({ error: 'Perfil no encontrado' });
+
+    const {
+      nombre_lugar,
+      categoria,
+      descripcion,
+      ciudad,
+      direccion,
+      lat,
+      lng,
+      horario_desde,
+      horario_hasta,
+      moneda,
+      precio_desde,
+      precio_hasta,
+      info_precios,
+      remove_foto_ids,
+    } = req.body;
+
+    // Validaciones mínimas
+    if (categoria && !CATS.has(categoria)) {
+      return res.status(400).json({ error: 'Categoría no válida' });
+    }
+    if ((horario_desde && !horario_hasta) || (!horario_desde && horario_hasta)) {
+      return res.status(400).json({ error: 'Debes enviar horario_desde y horario_hasta juntos o ninguno' });
+    }
+    if (horario_desde && horario_hasta && horario_desde >= horario_hasta) {
+      return res.status(400).json({ error: 'El horario_desde debe ser menor que horario_hasta' });
+    }
+
+    const pDesde = precio_desde !== undefined && precio_desde !== '' ? Number(precio_desde) : null;
+    const pHasta = precio_hasta !== undefined && precio_hasta !== '' ? Number(precio_hasta) : null;
+    if ((pDesde !== null && pDesde < 0) || (pHasta !== null && pHasta < 0)) {
+      return res.status(400).json({ error: 'Los precios no pueden ser negativos' });
+    }
+    if (pDesde !== null && pHasta !== null && pDesde > pHasta) {
+      return res.status(400).json({ error: 'precio_desde no puede ser mayor a precio_hasta' });
+    }
+
+    // Build set dinámico
+    const fields = [];
+    const values = [];
+    const setIf = (col, val, transform = (x)=>x) => {
+      if (val !== undefined) { fields.push(`${col} = ?`); values.push(transform(val)); }
+    };
+
+    setIf('nombre_lugar', nombre_lugar);
+    setIf('categoria', categoria);
+    setIf('descripcion', descripcion);
+    setIf('ciudad', ciudad);
+    setIf('direccion', direccion);
+    setIf('lat', lat, Number);
+    setIf('lng', lng, Number);
+    setIf('horario_desde', horario_desde);
+    setIf('horario_hasta', horario_hasta);
+    setIf('moneda', moneda);
+    setIf('precio_desde', precio_desde, v => (v === '' ? null : Number(v)));
+    setIf('precio_hasta', precio_hasta, v => (v === '' ? null : Number(v)));
+    setIf('info_precios', info_precios);
+
+    await conn.beginTransaction();
+
+    if (fields.length) {
+      await conn.query(`UPDATE perfilempresa SET ${fields.join(', ')} WHERE id = ?`, [...values, id]);
+    }
+
+    // Eliminar fotos (y borrar archivos)
+    if (remove_foto_ids) {
+      let ids = [];
+      try { ids = JSON.parse(remove_foto_ids); } catch {}
+      if (Array.isArray(ids) && ids.length) {
+        const [rows] = await conn.query(
+          `SELECT * FROM perfilempresa_fotos WHERE id IN (${ids.map(()=>'?').join(',')}) AND perfil_id = ?`,
+          [...ids, id]
+        );
+        for (const f of rows) {
+          const filename = f.imagen_url.replace('/uploads/', '');
+          const filepath = path.join(uploadsDir, filename);
+          fs.existsSync(filepath) && fs.unlinkSync(filepath);
+        }
+        await conn.query(
+          `DELETE FROM perfilempresa_fotos WHERE id IN (${ids.map(()=>'?').join(',')}) AND perfil_id = ?`,
+          [...ids, id]
+        );
+      }
+    }
+
+    // Agregar fotos nuevas
+    const files = req.files || [];
+    for (const f of files) {
+      const url = `/uploads/${f.filename}`;
+      await conn.query(
+        'INSERT INTO perfilempresa_fotos (perfil_id, imagen_url) VALUES (?, ?)',
+        [id, url]
+      );
+    }
+
+    await conn.commit();
+
+    const [[perfil]] = await conn.query('SELECT * FROM perfilempresa WHERE id = ?', [id]);
+    const [fotos] = await conn.query('SELECT * FROM perfilempresa_fotos WHERE perfil_id = ?', [id]);
+    res.json({ ...perfil, fotos });
+  } catch (err) {
+    console.error(err);
+    try { await conn.rollback(); } catch {}
+    res.status(500).json({ error: 'Error actualizando perfil' });
+  } finally {
+    conn.release();
+  }
+});
+
+/**
+ * DELETE /api/perfiles/:id
+ * - Borra el perfil y sus fotos (y los archivos físicos).
+ */
+router.delete('/perfiles/:id', async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ error: 'id inválido' });
+
+    await conn.beginTransaction();
+
+    const [fotos] = await conn.query('SELECT * FROM perfilempresa_fotos WHERE perfil_id = ?', [id]);
+    for (const f of fotos) {
+      const filename = f.imagen_url.replace('/uploads/', '');
+      const filepath = path.join(uploadsDir, filename);
+      fs.existsSync(filepath) && fs.unlinkSync(filepath);
+    }
+    await conn.query('DELETE FROM perfilempresa_fotos WHERE perfil_id = ?', [id]);
+
+    const [result] = await conn.query('DELETE FROM perfilempresa WHERE id = ?', [id]);
+    await conn.commit();
+
+    if (!result.affectedRows) return res.status(404).json({ error: 'Perfil no encontrado' });
+
+    res.json({ message: 'Perfil eliminado' });
+  } catch (err) {
+    console.error(err);
+    try { await conn.rollback(); } catch {}
+    res.status(500).json({ error: 'Error eliminando perfil' });
+  } finally {
+    conn.release();
+  }
+});
+
 export const perfilesRouter = router;
