@@ -1,0 +1,280 @@
+/* ==================== VARIABLES ==================== */
+:root{
+  --emp-bg: #ffffff;
+  --emp-surface: #ffffff;
+  --emp-card: #ffffff;
+
+  --emp-accent: #5a2dbf;
+  --emp-accent-2: #4a23a3;
+  --emp-accent-10: rgba(90,45,191,.10);
+  --emp-accent-06: rgba(90,45,191,.06);
+
+  --emp-border: #e8e3f9;
+  --emp-text: #1f2937;
+  --emp-muted: #6b7280;
+
+  --emp-primary: var(--emp-accent);
+  --emp-primary-2: #6b3ad8;
+
+  --radius: 16px;
+  --shadow-1: 0 8px 24px rgba(17,24,39,.08);
+}
+
+/* ==================== BASE ==================== */
+*{ box-sizing: border-box }
+img{ display:block; max-width:100% }
+
+.pe-root{
+  min-height: 100dvh;
+  color: var(--emp-text);
+  background: url("../ImagenesP/ImagenesEmp/fondoEmp.jpg") center/cover no-repeat fixed;
+  padding: 18px 14px 40px;
+}
+
+.glass{
+  background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.86));
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--emp-border);
+  border-radius: var(--radius);
+}
+
+.card-3d{
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1), inset 0 1px 0 rgba(255,255,255,.7);
+}
+
+/* ==================== HEADER ==================== */
+.pe-header{
+  max-width: 1200px;
+  margin: 0 auto 18px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  padding: 16px 18px;
+}
+.pe-header__left{ display:flex; align-items:center; gap:12px }
+.pe-logo{ font-size: 28px }
+.pe-header h1{
+  margin:0; font-size:1.35rem; color:var(--emp-accent); letter-spacing:.2px;
+}
+.pe-header p{ margin:2px 0 0; color:var(--emp-muted); font-size:.95rem }
+.pe-header__right{ display:grid; place-items:center }
+.pe-avatar-form{ display:flex; align-items:center; gap:12px }
+.pe-avatar{
+  width:72px; height:72px; border-radius:50%;
+  border:1px solid var(--emp-border); background:#f8f7ff;
+  overflow:hidden; display:grid; place-items:center;
+}
+.pe-avatar img{ width:100%; height:100%; object-fit:cover }
+.pe-avatar span{ font-size:24px; opacity:.6 }
+.pe-avatar-actions{ display:flex; gap:8px }
+
+/* ==================== FORM LAYOUT ==================== */
+.pe-form{
+  max-width: 1200px;
+  margin: 0 auto 18px;
+  display: grid;
+  grid-template-columns: 1.2fr .8fr;
+  gap: 16px;
+  padding: 16px;
+  background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.86));
+  border: 1px solid var(--emp-border);
+  border-radius: var(--radius);
+}
+@media (max-width:980px){ .pe-form{ grid-template-columns:1fr } }
+
+.pe-col{ display:grid; gap:16px }
+
+.pe-block{
+  border:1px solid var(--emp-border);
+  border-radius: var(--radius);
+  background: var(--emp-card);
+  padding:14px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+}
+.pe-block__head{ margin-bottom:10px }
+.pe-block__head h3{ margin:0 0 2px; color:var(--emp-accent); font-size:1.05rem }
+.pe-block__head p{ margin:0; color:var(--emp-muted); font-size:.95rem }
+
+/* ==================== CAMPOS ==================== */
+.field{ display:grid; gap:6px }
+.field label{ font-weight:600; font-size:.95rem; color:#3b3b59 }
+.field input,
+.field select,
+.field textarea{
+  width:100%;
+  border-radius:12px;
+  border:1px solid var(--emp-border);
+  background:#fff;
+  padding:10px 12px;
+  outline:none;
+  transition: box-shadow .15s ease, border-color .15s ease, transform .06s ease;
+}
+.field textarea{ resize:vertical }
+.field input:focus,
+.field select:focus,
+.field textarea:focus{
+  border-color: rgba(90,45,191,.35);
+  box-shadow: 0 0 0 4px var(--emp-accent-10);
+}
+.field input:focus-visible,
+.field select:focus-visible,
+.field textarea:focus-visible{
+  outline: none;
+}
+
+.pe-grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.field-colspan{ grid-column: 1 / -1 }
+
+.pe-row{ display:grid; grid-template-columns: repeat(3,1fr); gap:12px }
+@media (max-width:720px){
+  .pe-grid, .pe-row{ grid-template-columns:1fr }
+}
+
+/* Combo input + botón */
+.combo{ display:grid; grid-template-columns:1fr auto; gap:8px }
+
+/* Sugerencias */
+.pe-suggest{
+  margin:6px 0 0; padding:6px;
+  list-style:none; border:1px solid var(--emp-border);
+  border-radius:10px; background:#fff;
+  max-height:220px; overflow:auto;
+}
+.pe-suggest li{ padding:8px 10px; cursor:pointer; border-radius:8px }
+.pe-suggest li:hover{ background:var(--emp-accent-06) }
+
+.msg-error{ margin:6px 0 0; color:#b91c1c }
+
+/* ==================== MAPA ==================== */
+.pe-map{
+  height:360px; overflow:hidden;
+  border:1px solid var(--emp-border);
+  border-radius:14px;
+}
+
+/* ==================== FOTOS ==================== */
+.pe-photo-main{
+  display:grid; grid-template-columns:160px 1fr; gap:10px; align-items:center;
+}
+.pe-photo-main img{
+  width:160px; height:120px; object-fit:cover;
+  border-radius:12px; border:1px solid #eee;
+}
+.pe-photo-actions{ display:flex; gap:8px }
+
+.pe-gallery{
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(110px,1fr));
+  gap:10px; margin-bottom:8px;
+}
+.pe-thumb{ position:relative }
+.pe-thumb img{
+  width:100%; height:90px; object-fit:cover;
+  border-radius:10px; border:1px solid #eee;
+}
+.pe-thumb__remove{
+  position:absolute; top:6px; right:6px;
+  border:none; width:22px; height:22px; border-radius:999px;
+  background:#ef4444; color:#fff; cursor:pointer;
+  line-height:22px; text-align:center; font-weight:700;
+}
+
+/* ---------- Dropzone (foto principal) ---------- */
+.pe-dropzone{
+  border:2px dashed var(--emp-border);
+  border-radius:14px;
+  background:#fff;
+  padding:24px 14px;
+  display:grid; place-items:center; gap:8px;
+  text-align:center; cursor:pointer;
+  transition:border-color .15s ease, background .15s ease, box-shadow .15s ease, transform .06s ease;
+}
+.pe-dropzone:hover{
+  border-color: rgba(90,45,191,.35);
+  background: var(--emp-accent-06);
+  box-shadow: 0 0 0 4px var(--emp-accent-10);
+  transform: translateY(-1px);
+}
+.pe-dropzone:focus-visible{
+  outline:none;
+  box-shadow: 0 0 0 4px var(--emp-accent-10);
+  border-color: rgba(90,45,191,.35);
+}
+.pe-dropzone__icon{ font-size:36px }
+.pe-dropzone__text{ display:grid; gap:6px; color:var(--emp-muted) }
+.pe-dropzone__text strong{ color:var(--emp-text) }
+.pe-hint{ color:var(--emp-muted); opacity:.9 }
+
+/* ---------- Botón “archivo bonito” (más fotos) ---------- */
+.file-btn{
+  margin-top:8px;
+  display:inline-flex; align-items:center; gap:10px;
+  border-radius:12px;
+  border:1px solid rgba(90,45,191,.35);
+  background: linear-gradient(180deg, var(--emp-primary), var(--emp-primary-2));
+  color:#fff; padding:10px 14px; cursor:pointer; user-select:none;
+  box-shadow: 0 10px 18px rgba(90,45,191,.18);
+  transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+}
+.file-btn:hover{ filter:brightness(1.05); transform:translateY(-1px) }
+.file-btn:focus-visible{
+  outline:none;
+  box-shadow: 0 0 0 4px var(--emp-accent-10), 0 10px 18px rgba(90,45,191,.18);
+}
+.file-btn__icon{ font-size:18px; line-height:1 }
+.file-btn__label{ font-weight:600 }
+
+/* ==================== BOTONES GENERALES ==================== */
+.btn{
+  border-radius:12px; padding:10px 14px;
+  border:1px solid var(--emp-border); background:#fff; color:var(--emp-text);
+  cursor:pointer;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease, border-color .12s ease;
+}
+.btn:hover{ transform:translateY(-1px); box-shadow:var(--shadow-1) }
+.btn:disabled{ opacity:.7; cursor:not-allowed; transform:none; box-shadow:none }
+.btn:focus-visible{ outline:none; box-shadow:0 0 0 4px var(--emp-accent-10) }
+
+.btn-light{ background:#fff }
+.btn-outline{ background:#fff; border-color:rgba(90,45,191,.35); color:var(--emp-accent) }
+.btn-outline:hover{ background:var(--emp-accent-06) }
+.btn-dark{ background:#111827; color:#fff; border-color:#111827 }
+.btn-dark:hover{ filter:brightness(1.04) }
+.btn-danger{ background:#fee2e2; color:#991b1b; border-color:#fca5a5 }
+.btn-danger:hover{ background:#ffdede }
+.btn-primary{
+  color:#fff;
+  border-color:rgba(90,45,191,.35);
+  background: linear-gradient(180deg, var(--emp-primary), var(--emp-primary-2));
+  box-shadow: 0 10px 24px rgba(90,45,191,.22);
+}
+.btn-primary:hover{ filter:brightness(1.05) }
+.btn-lg{ padding:12px 18px; font-weight:700 }
+
+/* ==================== ACCIONES / LISTA ==================== */
+.pe-actions{ display:flex; justify-content:flex-end; margin-top:8px }
+
+.pe-list{
+  max-width:1200px; margin:0 auto;
+  padding:12px 14px;
+  border:1px solid var(--emp-border);
+  background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.86));
+  border-radius: var(--radius);
+}
+.pe-list__title{ margin:4px 0 10px; color:var(--emp-accent) }
+.pe-list__ul{ list-style:none; padding:0; margin:0; display:grid; gap:8px }
+.pe-list__ul li{
+  display:flex; align-items:center; gap:8px;
+  padding:10px 12px; border:1px solid var(--emp-border);
+  border-radius:12px; background:#fff;
+}
+.pe-list__ul li span{ color:var(--emp-muted); font-size:.95rem }
+
+/* Esconde totalmente los inputs file nativos */
+input[type="file"] {
+  display: none !important;
+}
