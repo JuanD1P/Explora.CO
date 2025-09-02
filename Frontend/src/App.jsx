@@ -16,6 +16,7 @@ import PerfilEmpresa from './Components/PerfilEmpresa.jsx';
 import EventosLugar from './Components/EventosLugar.jsx';
 import ValoracionesLugar from './Components/ValoracionesLugar.jsx';
 import Departamentos from './Components/Departamentos.jsx';
+import EditarPublicacion from "./Components/EditarPublicacion.jsx";
 
 
 function App() {
@@ -63,6 +64,15 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['EMPRESA']}>
               <EventosLugar />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/empresa/editar-publicacion/:id"
+          element={
+            <ProtectedRoute allowedRoles={['EMPRESA']}>
+              <EditarPublicacion />
             </ProtectedRoute>
           }
         />

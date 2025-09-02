@@ -27,10 +27,14 @@
   --emp-nav-h: 64px;
 }
 
+html, body, #root { height: 100%; }
+body { margin: 0; } /* <- adiós franja blanca del navegador */
+
 .emp-root{
   min-height: 100dvh;
   color: var(--emp-text);
   background: url("../ImagenesP/ImagenesEmp/fondoEmp.jpg") center/cover no-repeat;
+  padding-top: 20px; 
 }
 
 
@@ -40,8 +44,9 @@ img { display: block; max-width: 100% }
 
 .emp-header{
   max-width: 1200px;
-  margin: 10px auto 22px;     /* separación arriba/abajo */
-  padding: 10px 16px;
+  margin: 0 auto 18px;     /* separación arriba/abajo */
+  padding: 16px 18px;
+  gap: 16px;
   border-radius: 18px;
   border: 1px solid var(--emp-border);
   background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.86)); /* efecto glass suave */
@@ -52,15 +57,16 @@ img { display: block; max-width: 100% }
   box-shadow: 0 8px 24px rgba(17,24,39,.08), inset 0 1px 0 rgba(255,255,255,.7);
 }
 
+
 /* Marca */
 .emp-brand{
   display:flex; align-items:center; gap:.6rem;
   color: var(--emp-accent);
   text-decoration: none;
-  font-size: 1.06rem;
+  font-size: 1.35rem;
   font-weight: 700;
 }
-.emp-logo{ font-size: 1.25rem }
+.emp-logo{ font-size: 28px }
 
 /* Navegación */
 .emp-nav{ display:flex; align-items:center; gap:1rem }
@@ -133,20 +139,51 @@ img { display: block; max-width: 100% }
   padding: 36px 28px 40px;
   text-align: center;
 }
-.emp-cta{ display:flex; flex-direction:column; align-items:center; gap:10px }
+.emp-cta{ 
+  display: flex;
+  flex-direction: row;      /* antes column */
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+ }
+
+
+@media (max-width: 560px){
+  .emp-cta{ flex-direction: column; }
+}
+
 .emp-create-btn{
-  display:flex; align-items:center; gap:12px;background-attachment: scroll, scroll, fixed;
+  min-width: 260px;
+  display: flex;
+  align-items: center;      /* centra verticalmente */
+  justify-content: center;  /* centra horizontalmente (texto + ícono) */
+  gap: 12px;
+  
   border: 1px solid rgba(90,45,191,.35);
   background: linear-gradient(180deg, var(--emp-primary), var(--emp-primary-2));
-  color:#fff; padding: 10px 16px; border-radius: 999px;
-  font-weight: 600; cursor: pointer;
+  color: #fff;
+  padding: 14px 20px;       /* más alto y más ancho */
+  border-radius: 999px;
+  font-size: 1.1rem;        /* texto más grande */
+  font-weight: 600;
+  cursor: pointer;
   box-shadow: 0 10px 24px rgba(90,45,191,.28);
+  transition: filter .2s ease, transform .2s ease;
 }
+
 .emp-create-btn:hover{ 
-    filter: brightness(1.05);
-    background: #4a23a3;
+  filter: brightness(1.05);
+  background: #4a23a3;
+  transform: translateY(-2px);
 }
-.emp-plus{ width: 40px; height: 40px; color: #fff }
+
+.emp-plus{
+  width: 35px;  
+  height: 35px;
+  color: #fff;
+}
+
 .emp-hero-title{
   margin-top: 4px;
   font-size: 1.6rem;
@@ -154,17 +191,6 @@ img { display: block; max-width: 100% }
   letter-spacing: .2px;
   color: var(--emp-accent);
 }
-.emp-secondary-btn{
-  display:inline-block;
-  margin-top: 2px;
-  padding: 10px 16px;
-  border-radius: 12px;
-  border: 1px solid var(--emp-border);
-  color: var(--emp-accent);
-  text-decoration: none;
-  background: #fff;
-}
-.emp-secondary-btn:hover{ background: var(--emp-accent-06) }
 
 /* ==================== SECCIONES / GRID ==================== */
 .emp-section{ max-width: 1200px; margin: 0 auto 34px; padding: 0 4px }
@@ -210,6 +236,19 @@ img { display: block; max-width: 100% }
 }
 .icon-btn:hover{ background: var(--emp-accent-06); border-color: rgba(90,45,191,.25) }
 .icon-btn svg{ width: 18px; height: 18px }
+
+.emp-section--glass{
+  border: 1px solid var(--emp-border);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.86));
+  backdrop-filter: blur(6px);
+  box-shadow: 0 10px 30px rgba(17,24,39,.10), inset 0 1px 0 rgba(255,255,255,.7);
+  padding: 18px 18px 22px;
+}
+.emp-section--glass .emp-section__head{ margin: 4px 6px 14px; }
+.emp-section--glass .emp-grid{ padding: 0 4px 4px; }
+
+.emp-header{ border-color: #efeafd; }
 
 /* ==================== FOOTER ==================== */
 .emp-footer{

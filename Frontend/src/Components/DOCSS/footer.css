@@ -70,7 +70,7 @@
 .ft__list a:hover{ color: var(--accent) }
 
 .ft__contact{
-  background: linear-gradient(180deg, rgba(10,44,65,.9), rgba(7,26,42,.9));
+  background: linear-gradient(180deg, #0a2c41e6, rgba(7,26,42,.9));
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   padding: 14px;
