@@ -1,3 +1,4 @@
+
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import "./DOCSS/Departamentos.css";
@@ -5,24 +6,8 @@ import imgDemo from "../ImagenesP/InicioUsuario/ImagenPrueba.png";
 
 const COL_JSON =
   "https://raw.githubusercontent.com/marcovega/colombia-json/master/colombia.min.json";
-
-// Bucket de municipios (ya lo tenías)
 const CDN_BASE =
   "https://ihcuejqfabmgyvsdleqf.supabase.co/storage/v1/object/public/municipios";
-
-// ⬇️ NUEVO: bucket para imágenes de DEPARTAMENTOS
-const DEP_BASE =
-  "https://ihcuejqfabmgyvsdleqf.supabase.co/storage/v1/object/public/departamentos";
-
-// ⬇️ Versión para bustear caché (CDN/navegador)
-const ASSET_VER = import.meta.env.DEV
-  ? Date.now()
-  : (import.meta.env.VITE_ASSET_VERSION || "1");
-
-// Helpers con versión en la URL
-const deptImgUrl = (slug, ext = "webp") => `${DEP_BASE}/${slug}.${ext}?v=${ASSET_VER}`;
-const muniImgUrl = (deptSlug, muniSlug, ext = "jpg") =>
-  `${CDN_BASE}/${deptSlug}/${muniSlug}.${ext}?v=${ASSET_VER}`;
 
 const slugify = (s) =>
   s
@@ -34,6 +19,9 @@ const slugify = (s) =>
 
 const pretty = (slug) =>
   slug.split("-").map((t) => t.charAt(0).toUpperCase() + t.slice(1)).join(" ");
+
+const muniImgUrl = (deptSlug, muniSlug, ext = "jpg") =>
+  `${CDN_BASE}/${deptSlug}/${muniSlug}.${ext}`;
 
 const SkeletonItem = () => (
   <li className="mun-item skeleton" aria-hidden="true">
@@ -49,20 +37,11 @@ const Departamentos = () => {
   const [search, setSearch] = useState("");
 
   const nombreDepto = useMemo(() => pretty(slug), [slug]);
+  const deptoImg = useMemo(() => `/ImagenesP/Departamentos/${slug}.jpg`, [slug]);
 
-  // ⬇️ AHORA apunta al bucket (webp por defecto) con versión
-  const deptoImg = useMemo(() => deptImgUrl(slug, "webp"), [slug]);
-
-  // ⬇️ Fallback: webp → jpg → demo (todas versionadas)
   const onDeptImgError = (e) => {
-    const triedJpg = e.currentTarget.dataset.fallbackTried;
-    if (!triedJpg) {
-      e.currentTarget.dataset.fallbackTried = "1";
-      e.currentTarget.src = deptImgUrl(slug, "jpg");
-    } else {
-      e.currentTarget.src = imgDemo;
-      e.currentTarget.onerror = null;
-    }
+    e.currentTarget.src = imgDemo;
+    e.currentTarget.onerror = null;
   };
 
   useEffect(() => {
@@ -85,6 +64,7 @@ const Departamentos = () => {
     })();
     return () => { alive = false; };
   }, [slug]);
+
 
   const filtered = useMemo(() => {
     if (!search.trim()) return municipios;
@@ -109,6 +89,7 @@ const Departamentos = () => {
           <p className="dep-sub">Explora sus municipios, imágenes y datos clave.</p>
         </div>
       </section>
+
 
       <section className="dep-grid">
         {/* IZQUIERDA */}
