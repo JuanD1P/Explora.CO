@@ -167,4 +167,3 @@ img{max-width:100%;display:block}
   transform: translateX(-100%); animation: depShimmer 1.2s linear infinite; pointer-events:none;
 }
 
-.ini-hero__img { will-change: transform; }

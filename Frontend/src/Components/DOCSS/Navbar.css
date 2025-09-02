@@ -2,7 +2,7 @@
 .nv {
   background: linear-gradient(135deg, #3a0070, #1c002e);
   padding: 10px 20px;
-  display: flex;
+  display: grid;
   justify-content: center;
   align-items: center;
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.4);
