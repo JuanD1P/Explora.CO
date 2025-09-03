@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import "./DOCSS/PerfilEmpresa.css";
 import "leaflet/dist/leaflet.css";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 
 const API_URL = "http://localhost:3000";
+const UPLOADS_HOST = "http://localhost:3000"; 
 
 // Fix de iconos de Leaflet en bundlers
 delete L.Icon.Default.prototype._getIconUrl;
@@ -37,6 +39,10 @@ const MAX_MB = 10;
 const ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
 
 const PerfilEmpresa = () => {
+  const navigate = useNavigate();
+  const { id } = useParams();         
+  const isEdit = Boolean(id);
+
   // ------ Form datos del lugar ------
   const [nombreLugar, setNombreLugar] = useState("");
   const [categoria, setCategoria] = useState("");
@@ -53,14 +59,14 @@ const PerfilEmpresa = () => {
   const [infoPrecios, setInfoPrecios] = useState("");
 
   // Fotos del lugar
-  const [fotoPrincipal, setFotoPrincipal] = useState(null);
+  const [fotoPrincipal, setFotoPrincipal] = useState(null);         
   const [fotoPrincipalPreview, setFotoPrincipalPreview] = useState(null);
-  const [fotosExtra, setFotosExtra] = useState([]);
+  const [fotosExtra, setFotosExtra] = useState([]);                  
+  const [fotosExistentes, setFotosExistentes] = useState([]);       
   const addExtraInputRef = useRef(null);
   const principalInputRef = useRef(null);
 
   const [loading, setLoading] = useState(false);
-  const [perfiles, setPerfiles] = useState([]);
 
   // ------ Avatar empresa ------
   const [avatarFile, setAvatarFile] = useState(null);
@@ -75,13 +81,6 @@ const PerfilEmpresa = () => {
   const [geoStatus, setGeoStatus] = useState("idle");
   const [geoErr, setGeoErr] = useState("");
   const center = useMemo(() => [loc.lat, loc.lng], [loc.lat, loc.lng]);
-
-  const cargarPerfiles = async () => {
-    const res = await fetch(`${API_URL}/api/perfiles?empresa_id=${EMPRESA_ID}`, { credentials: "include" });
-    const data = await res.json();
-    setPerfiles(data);
-  };
-  useEffect(() => { cargarPerfiles(); }, []);
 
   // ------- helpers upload -------
   const fileIsOk = (f) => {
@@ -167,7 +166,7 @@ const PerfilEmpresa = () => {
       const display = data?.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
       setLoc({ lat, lng, address: display, chosen: true });
       setDireccion(display);
-      const city = data?.address?.city || data?.address?.town || data?.village || "";
+      const city = data?.address?.city || data?.address?.town || data?.address?.village || "";
       if (city) setCiudad(city);
       setQuery(display);
     } catch {
@@ -190,7 +189,47 @@ const PerfilEmpresa = () => {
     return null;
   };
 
-  // ------- Enviar lugar -------
+  /* ==================== CARGAR DATOS EN MODO EDICIÓN ==================== */
+  useEffect(() => {
+    if (!isEdit) return;
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/perfiles/${id}`, { credentials: "include" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || "No se pudo cargar el perfil");
+
+        setNombreLugar(data.nombre_lugar || "");
+        setCategoria(data.categoria || "");
+        setDescripcion(data.descripcion || "");
+        setCiudad(data.ciudad || "");
+        setDireccion(data.direccion || "");
+        setQuery(data.direccion || "");
+        setLoc({
+          lat: Number(data.lat) || 4.711,
+          lng: Number(data.lng) || -74.0721,
+          address: data.direccion || "",
+          chosen: true,
+        });
+        setHorarioDesde(data.horario_desde ? String(data.horario_desde).slice(0,5) : "");
+        setHorarioHasta(data.horario_hasta ? String(data.horario_hasta).slice(0,5) : "");
+        setMoneda(data.moneda || "COP");
+        setPrecioDesde(data.precio_desde ?? "");
+        setPrecioHasta(data.precio_hasta ?? "");
+        setInfoPrecios(data.info_precios || "");
+
+        const fotos = Array.isArray(data.fotos) ? data.fotos : [];
+        setFotosExistentes(fotos);
+        if (fotos[0]?.imagen_url) {
+          setFotoPrincipalPreview(`${UPLOADS_HOST}${fotos[0].imagen_url}`);
+        }
+      } catch (e) {
+        console.error(e);
+        alert(e.message);
+      }
+    })();
+  }, [isEdit, id]);
+
+  // ------- Enviar (crear o guardar cambios) -------
   const onSubmit = async (e) => {
     e.preventDefault();
 
@@ -224,22 +263,21 @@ const PerfilEmpresa = () => {
     formData.append("precio_desde", precioDesde || "");
     formData.append("precio_hasta", precioHasta || "");
     formData.append("info_precios", infoPrecios || "");
+
+    // nuevas fotos (la principal nueva va primero)
     if (fotoPrincipal) formData.append("fotos", fotoPrincipal);
     fotosExtra.forEach(({ file }) => formData.append("fotos", file));
 
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/api/perfiles`, { method: "POST", body: formData, credentials: "include" });
+      const url = isEdit ? `${API_URL}/api/perfiles/${id}` : `${API_URL}/api/perfiles`;
+      const method = isEdit ? "PUT" : "POST";
+      const res = await fetch(url, { method, body: formData, credentials: "include" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Error al crear el perfil");
+      if (!res.ok) throw new Error(data?.error || (isEdit ? "No se pudo actualizar" : "Error al crear el perfil"));
 
-      // limpiar
-      setNombreLugar(""); setCategoria(""); setDescripcion(""); setCiudad(""); setDireccion("");
-      setFotoPrincipal(null); setFotoPrincipalPreview(null); setFotosExtra([]);
-      setHorarioDesde(""); setHorarioHasta(""); setMoneda("COP"); setPrecioDesde(""); setPrecioHasta(""); setInfoPrecios("");
-
-      await cargarPerfiles();
-      alert("Perfil guardado");
+      // volver al panel
+      navigate("/InicioEmpresa");
     } catch (err) {
       alert(err.message);
     } finally {
@@ -254,14 +292,13 @@ const PerfilEmpresa = () => {
         <div className="pe-header__left">
           <span className="pe-logo" aria-hidden>🏢</span>
           <div>
-            <h1>Perfil de Lugar</h1>
-            <p>Crea un lugar atractivo para tus visitantes</p>
+            <h1>{isEdit ? "Editar lugar" : "Perfil de Lugar"}</h1>
+            <p>{isEdit ? "Actualiza los datos de tu publicación" : "Crea un lugar atractivo para tus visitantes"}</p>
           </div>
         </div>
         <div className="pe-header__right">
           <form onSubmit={subirAvatar} className="pe-avatar-form">
             <div className="pe-avatar">{avatarPreview ? <img src={avatarPreview} alt="avatar" /> : <span>📷</span>}</div>
-            {/* Input de archivo oculto (quitamos el botón feo) */}
             <input ref={avatarInputRef} type="file" accept="image/*" onChange={onPickAvatar} hidden />
             <div className="pe-avatar-actions">
               <button type="button" className="btn btn-outline" onClick={() => avatarInputRef.current?.click()}>
@@ -412,11 +449,12 @@ const PerfilEmpresa = () => {
               <p>Una buena imagen vale más que mil clics</p>
             </div>
 
-            {/* Foto principal: DROPZONE bonita */}
+            {/* Foto principal: si hay en BD o el usuario elige una nueva */}
             <div className="field">
               <label>Foto principal</label>
 
               {!fotoPrincipalPreview ? (
+                // si no hay preview, podríamos estar en crear sin foto; en edición ya pusimos preview desde BD
                 <div
                   className="pe-dropzone"
                   onClick={() => principalInputRef.current?.click()}
@@ -471,10 +509,22 @@ const PerfilEmpresa = () => {
               )}
             </div>
 
-            {/* Más fotos: botón bonito + grid previews */}
-            <div className="field">
-              <label>Más fotos</label>
+            {/* Galería: primero las existentes (solo lectura), luego las nuevas que agregue el usuario */}
+            {isEdit && fotosExistentes.length > 0 && (
+              <div className="field">
+                <label>Fotos existentes</label>
+                <div className="pe-gallery">
+                  {fotosExistentes.map((f) => (
+                    <div key={f.id} className="pe-thumb">
+                      <img src={`${UPLOADS_HOST}${f.imagen_url}`} alt="existente" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
+            <div className="field">
+              <label>Más fotos (agregar nuevas)</label>
               <div className="pe-gallery">
                 {fotosExtra.map((f, i) => (
                   <div key={i} className="pe-thumb">
@@ -506,27 +556,12 @@ const PerfilEmpresa = () => {
           </div>
 
           <div className="pe-actions">
-            <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
-              {loading ? "Guardando..." : "Guardar perfil"}
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? "Guardando..." : isEdit ? "Guardar cambios" : "Guardar"}
             </button>
           </div>
         </section>
       </form>
-
-      {/* Listado creado (si existe) */}
-      {Array.isArray(perfiles) && perfiles.length > 0 && (
-        <section className="pe-list card-3d">
-          <h4 className="pe-list__title">Tus lugares creados</h4>
-          <ul className="pe-list__ul">
-            {perfiles.map((p) => (
-              <li key={p.id}>
-                <strong>{p.nombre_lugar}</strong>
-                <span>{p.ciudad}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
     </main>
   );
 };
