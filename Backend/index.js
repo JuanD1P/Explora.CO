@@ -4,8 +4,11 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import { userRouter } from './Routes/usuariosR.js';  
-import { perfilesRouter } from './Routes/perfilesR.js';  
+import dotenv from 'dotenv';
+dotenv.config();
+
+import { userRouter } from './Routes/usuariosR.js';
+import { perfilesRouter } from './Routes/perfilesR.js';
 import { empresasRouter } from './Routes/empresasR.js';
 import { eventosRouter } from './Routes/eventosR.js';
 import { valoracionesRouter } from './Routes/valoracionesR.js';
@@ -25,14 +28,19 @@ app.use(cookieParser());
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// estáticos
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// ✅ /uploads sale de .env (o fallback local)
+const uploadsDir = process.env.UPLOADS_DIR
+  ? path.resolve(process.env.UPLOADS_DIR)
+  : path.join(__dirname, 'uploads');
+
+app.use('/uploads', express.static(uploadsDir));
+console.log('📂 Sirviendo /uploads desde:', uploadsDir);
 
 // rutas
 app.use('/auth', userRouter);
-app.use('/api', perfilesRouter);  
-app.use('/api', empresasRouter); 
-app.use('/api', eventosRouter);  
+app.use('/api', perfilesRouter);
+app.use('/api', empresasRouter);
+app.use('/api', eventosRouter);
 app.use('/api', valoracionesRouter);
 
 app.listen(3000, () => {

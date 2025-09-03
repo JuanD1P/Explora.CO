@@ -5,15 +5,20 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import mysql from 'mysql2/promise';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const router = Router();
 
-// __dirname
+// __dirname (debe ir ANTES de usarlo)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// carpeta /uploads
-const uploadsDir = path.resolve(__dirname, '../uploads');
+// ✅ uploadsDir: toma .env o cae a ../uploads (SOLO UNA VEZ)
+const uploadsDir = process.env.UPLOADS_DIR
+  ? path.resolve(process.env.UPLOADS_DIR)
+  : path.resolve(__dirname, '../uploads');
+
 fs.mkdirSync(uploadsDir, { recursive: true });
 
 // Multer para múltiples fotos (campo: "fotos")
@@ -101,11 +106,8 @@ router.post('/empresa/avatar', upload.single('avatar'), async (req, res) => {
 router.post('/perfiles', upload.array('fotos', 10), async (req, res) => {
   const conn = await pool.getConnection();
   try {
-    // si tienes auth, puedes usar req.user?.id en vez de empresa_id del body
     const empresa_id = Number(req.body.empresa_id || req.user?.id);
-    if (!empresa_id) {
-      return res.status(400).json({ error: 'empresa_id requerido' });
-    }
+    if (!empresa_id) return res.status(400).json({ error: 'empresa_id requerido' });
 
     // validar que sea EMPRESA
     const [urows] = await conn.query('SELECT rol FROM usuarios WHERE id = ?', [empresa_id]);
