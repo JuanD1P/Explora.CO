@@ -11,8 +11,8 @@ img{max-width:100%;display:block}
 
 /* ===== BG decorativo (SIN animaciones) ===== */
 .ini-hero-bg{ position: fixed; inset: 0; z-index: -1; overflow: hidden; background:
-  radial-gradient(1200px 600px at 10% -10%, #eef9ff 0%, transparent 60%),
-  radial-gradient(900px 600px at 110% 20%, #effff6 0%, transparent 55%);
+  radial-gradient(1200px 600px at 10% -10%, #dac5f6 0%, transparent 60%),
+  radial-gradient(900px 600px at 110% 20%, #ead9ea 0%, transparent 55%);
 }
 .ini-bg-bubble{ position: absolute; border-radius: 999px; filter: blur(60px); opacity:.35 }
 .b1{ width: 32vw; height: 32vw; left: -10vw; top: -8vw; background: #cbeaff; }
@@ -20,7 +20,13 @@ img{max-width:100%;display:block}
 .b3{ width: 36vw; height: 36vw; left: 18vw; bottom: -14vh; background: #ffe9cf; }
 
 /* ===== Base ===== */
-.ini-root{ background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding: 24px 16px 56px }
+.ini-root{ 
+  background: url("../ImagenesP/InicioUsuario/fondoIni.jpg")center/cover no-repeat;
+  background-attachment: fixed; /* opcional */
+  color: var(--text); 
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; 
+  padding: 24px 16px 56px;
+}
 .glass{ background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.8)); border: 1px solid var(--border); backdrop-filter: blur(6px); box-shadow: var(--shadow); border-radius: var(--r-xl) }
 .card-3d{ border-radius: var(--r-xl); overflow: hidden; border: 1px solid var(--border) }
 .hover-raise{ transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, filter .2s ease; border: 1px solid var(--border); box-shadow: var(--shadow) }
@@ -32,21 +38,81 @@ img{max-width:100%;display:block}
 .ini-section__head h3{ margin:0; color: var(--accent-2); font-size: 22px; letter-spacing:.2px; font-weight:800 }
 .ini-section__head p{ margin: 4px 0 10px; color: var(--muted) }
 
-.ini-intro{ max-width: 1200px; margin: 0 auto 28px; display:grid; grid-template-columns: 1.12fr 1fr; gap: 16px }
+.ini-intro{ max-width: 1200px; margin: 0 auto 28px; display:grid; grid-template-columns: 1.12fr 1fr; gap: 16px; align-items: stretch; }
 .ini-intro__text{ padding: 22px 24px }
-.ini-intro__text p{ margin: 0 0 8px; line-height: 1.6 }
+.ini-intro__text p{ margin: 0 0 8px; line-height: 1.6 } 
 
-/* ===== Hero (SIN parallax ni animaciones) ===== */
-.ini-hero{ min-height: 300px; position: relative }
-.ini-hero__parallax{ display:none } /* lo ocultamos por completo */
+/* ===== Hero (SIN parallax ni animaciones decorativas) ===== */
+.ini-hero{
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  aspect-ratio: 16/9;
+}
+
+.ini-hero .carousel__track{
+  padding: 0 !important;
+  gap: 0 !important;
+  border-radius: inherit;   /* por si acaso */
+  overflow: hidden;
+}
+
+/* Ocultamos cualquier parallax */
+.ini-hero__parallax{ display:none }
+
+/* Track/slide/img heredan y respetan el redondeo del Hero */
+.ini-hero .carousel__track,
+.ini-hero .hero__slide,
+.ini-hero .ini-hero__img{
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+/* Imagen del Hero: tamaño + animaciones suaves */
+.ini-hero .ini-hero__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+
+  /* Animaciones añadidas */
+  animation: heroIn .8s ease-out both;           /* aparición */
+  transition: transform .6s ease, filter .6s ease; /* hover/vida */
+  will-change: transform, filter;
+}
+
+/* Leve “Ken Burns” al pasar el mouse por el Hero completo */
+.ini-hero:hover .ini-hero__img{
+  transform: scale(1.035);
+  filter: saturate(1.04) contrast(1.02);
+}
+
+@keyframes heroIn{
+  from{ opacity:0; transform: scale(1.03); }
+  to  { opacity:1; transform: scale(1); }
+}
 
 .ini-section{ max-width: 1200px; margin: 34px auto 10px }
 
 /* ===== Cards categorías (solo zoom hover) ===== */
 .ini-carousel{ border-radius: var(--r-xl); padding: 16px; position: relative }
 .ini-card{ display:flex; flex-direction: column; align-items: center; text-decoration: none; color: inherit; background:#fff; border-radius: var(--r-lg); overflow: hidden; position: relative }
-.ini-thumb{ width: 100%; position: relative; overflow: hidden }
-.ini-thumb img{ width:100%; aspect-ratio: 16/10; object-fit: cover; border-bottom: 1px solid var(--border); transition: transform .35s ease }
+.ini-thumb{ width: 100%; position: relative; overflow: hidden;
+/* Aseguramos el redondeo superior igual que la card */
+  border-top-left-radius: var(--r-lg);
+  border-top-right-radius: var(--r-lg);
+}
+.ini-thumb img{ width:100%; aspect-ratio: 16/10; object-fit: cover; border-bottom: 1px solid var(--border); transition: transform .35s ease;
+/* Hereda el radio del contenedor para evitar esquinas rectas */
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+/* Aparición suave de primeras miniaturas */
+  animation: thumbIn .5s ease-out both;
+}
+@keyframes thumbIn{
+  from{ opacity:0; transform: translateY(6px) scale(1.01); }
+  to  { opacity:1; transform: translateY(0) scale(1); }
+}
+
 .ini-card:hover .ini-thumb img{ transform: scale(1.035) translateY(-1%) }
 /* SIN brillo */
 .shine{ display:none }
@@ -105,8 +171,12 @@ img{max-width:100%;display:block}
 
 /* Hero: ocupa todo */
 .hero__track{ grid-auto-columns: 100%; }
-.hero__slide{ height:100%; }
-.ini-hero__img{ width:100%; height:100%; object-fit:cover; aspect-ratio:16/9 }
+.hero__slide{ 
+  height: 100%;
+  border-radius: inherit;
+  overflow: hidden;
+}
+.ini-hero__img{ width:100%; height:100%; object-fit:cover; display: block; border-radius: inherit; }
 
 /* Flechas generales */
 .carousel__nav{
@@ -144,11 +214,11 @@ img{max-width:100%;display:block}
 @media (min-width:1200px){ .deps__track{ grid-auto-columns: 28%; } }
 @media (min-width:1440px){ .deps__track{ grid-auto-columns: 23.5%; } }
 
-/* Quitamos transformaciones por “is-center/is-side” */
-.dep-card-wrap{}
 
 /* Accesibilidad/Motion */
 @media (prefers-reduced-motion: reduce){
   .carousel__track{ scroll-behavior: auto; }
   .img-smart, .carousel__nav{ transition: none !important; }
+  .ini-hero .ini-hero__img{ animation: none !important; transition: none !important; }
+  .ini-carousel .ini-thumb img{ animation: none !important; }
 }

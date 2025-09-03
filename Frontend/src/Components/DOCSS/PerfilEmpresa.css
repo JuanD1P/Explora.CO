@@ -123,6 +123,13 @@ img{ display:block; max-width:100% }
   outline: none;
 }
 
+/* >>> Alineación consistente entre input y select <<< */
+.field > input,
+.field > select{
+  height: 40px;              /* misma altura */
+}
+.field > select{ line-height: 1.2; } /* centra el texto (Windows) */
+
 .pe-grid{
   display:grid;
   grid-template-columns: 1fr 1fr;
@@ -253,7 +260,14 @@ img{ display:block; max-width:100% }
   box-shadow: 0 10px 24px rgba(90,45,191,.22);
 }
 .btn-primary:hover{ filter:brightness(1.05) }
-.btn-lg{ padding:12px 18px; font-weight:700 }
+/* .btn-lg existe pero ya no lo usamos para el Guardar */
+
+/* Botón Guardar más discreto y parejo */
+.pe-actions .btn.btn-primary{
+  padding:10px 16px;
+  border-radius:10px;
+  font-size:.95rem;
+}
 
 /* ==================== ACCIONES / LISTA ==================== */
 .pe-actions{ display:flex; justify-content:flex-end; margin-top:8px }
@@ -278,3 +292,9 @@ img{ display:block; max-width:100% }
 input[type="file"] {
   display: none !important;
 }
+
+
+/* asegura que la imagen principal no herede radios raros */
+.emp-card__media { position: relative; overflow: hidden; }
+.emp-card__media .media-img { width:100%; height:180px; object-fit:cover; border-radius:0 !important; display:block; }
+.emp-modal__media .media-img { width:100%; height:100%; max-height:420px; object-fit:cover; border-radius:0 !important; display:block; }
