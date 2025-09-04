@@ -35,8 +35,15 @@ const Login = () => {
                     localStorage.setItem('auth-token', result.data.token);
                 }
                 localStorage.setItem('user-role', result.data.role);
-                console.log("Token guardado:", localStorage.getItem("auth-token"));
-                console.log("Rol guardado:", localStorage.getItem("user-role"));
+
+                // Guarda e imprime el ID
+                if (result.data.id) {
+                  localStorage.setItem('user-id', result.data.id);
+
+                } else {
+                  console.warn("El backend no envió 'id'.");
+                }
+
                 
     
                 if (result.data.role === 'USER') {

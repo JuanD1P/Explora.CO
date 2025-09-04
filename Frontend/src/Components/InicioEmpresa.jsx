@@ -45,6 +45,27 @@ const IconPlus = (props) => (
 const InicioE = () => {
   const navigate = useNavigate();
 
+  /* ========== Sesión: empresaId desde localStorage ========== */
+  const empresaId = React.useMemo(() => {
+    const v = Number(localStorage.getItem("user-id"));
+    return Number.isFinite(v) ? v : null;
+  }, []);
+
+  /* Si quieres forzar login cuando no hay id, descomenta:
+  React.useEffect(() => {
+    if (empresaId === null) navigate("/login");
+  }, [empresaId, navigate]);
+  */
+
+  /* Si el user-id cambia en otra pestaña, recarga la vista */
+  React.useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === "user-id") window.location.reload();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
   /* Publicaciones (perfiles) */
   const [items, setItems] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
@@ -57,15 +78,17 @@ const InicioE = () => {
   const [errorEv, setErrorEv] = React.useState("");
   const [detailEv, setDetailEv] = React.useState(null); // modal de evento
 
-  // Si tienes auth, pon el id de la empresa logueada; null muestra todo:
-  const empresaId = null;
-
-  /* Cargar publicaciones */
+  /* Cargar publicaciones (SOLO las mías) */
   React.useEffect(() => {
     (async () => {
       try {
         setLoading(true);
-        const url = empresaId ? `${API_BASE}/perfiles?empresa_id=${empresaId}` : `${API_BASE}/perfiles`;
+        if (empresaId === null) {
+          setItems([]);
+          setError("Inicia sesión para ver tus publicaciones.");
+          return;
+        }
+        const url = `${API_BASE}/perfiles?empresa_id=${empresaId}`;
         const res = await fetch(url, { credentials: "include" });
         if (!res.ok) throw new Error("No se pudieron cargar las publicaciones");
         const data = await res.json();
@@ -79,12 +102,17 @@ const InicioE = () => {
     })();
   }, [empresaId]);
 
-  /* Cargar eventos */
+  /* Cargar eventos (SOLO los míos) */
   React.useEffect(() => {
     (async () => {
       try {
         setLoadingEv(true);
-        const url = empresaId ? `${API_BASE}/eventos?empresa_id=${empresaId}` : `${API_BASE}/eventos`;
+        if (empresaId === null) {
+          setEventos([]);
+          setErrorEv("Inicia sesión para ver tus eventos.");
+          return;
+        }
+        const url = `${API_BASE}/eventos?empresa_id=${empresaId}`;
         const res = await fetch(url, { credentials: "include" });
         if (!res.ok) throw new Error("No se pudieron cargar los eventos");
         const data = await res.json();
@@ -127,7 +155,7 @@ const InicioE = () => {
   };
 
   /* Handlers eventos */
-  const handleEditEv = (id) => navigate(`/EventosLugar/${id}`); // <-- ver EventosLugar.jsx abajo
+  const handleEditEv = (id) => navigate(`/EventosLugar/${id}`);
   const handleViewEv = async (evOrId) => {
     const id = typeof evOrId === "object" ? evOrId.id : evOrId;
     try {
@@ -189,7 +217,7 @@ const InicioE = () => {
       {/* ====== PUBLICACIONES ====== */}
       <section className="emp-section emp-section--glass">
         <div className="emp-section__head">
-          <h3>Publicaciones recientes</h3>
+          <h3>Mis publicaciones</h3>
           <p>Gestiona y mejora tu alcance</p>
         </div>
 
@@ -246,7 +274,7 @@ const InicioE = () => {
       {/* ====== EVENTOS ====== */}
       <section className="emp-section emp-section--glass">
         <div className="emp-section__head">
-          <h3>Eventos recientes</h3>
+          <h3>Mis eventos</h3>
           <p>Administra y promociona tus actividades</p>
         </div>
 
@@ -258,55 +286,55 @@ const InicioE = () => {
             <div style={{ gridColumn: "1/-1", padding: 12 }}>Aún no tienes eventos.</div>
           )}
 
-          {eventos.map((ev) => {
-            const img0 = absUrl(ev?.fotos?.[0]?.imagen_url) || imgDemo;
-            const title = ev.titulo || ev.nombre_evento || ev.nombre || "Evento";
-            const desc = ev.descripcion || ev.detalle || "";
-            const avatar = absUrl(ev.avatar_url);
+        {eventos.map((ev) => {
+          const img0 = absUrl(ev?.fotos?.[0]?.imagen_url) || imgDemo;
+          const title = ev.titulo || ev.nombre_evento || ev.nombre || "Evento";
+          const desc = ev.descripcion || ev.detalle || "";
+          const avatar = absUrl(ev.avatar_url);
 
-            const fIni = ev.fecha_inicio || ev.fecha_desde || ev.fecha || ev.inicio;
-            const fFin = ev.fecha_fin || ev.fecha_hasta || ev.fin;
-            const hIni = ev.hora_desde || ev.hora_inicio;
-            const hFin = ev.hora_hasta || ev.hora_fin;
+          const fIni = ev.fecha_inicio || ev.fecha_desde || ev.fecha || ev.inicio;
+          const fFin = ev.fecha_fin || ev.fecha_hasta || ev.fin;
+          const hIni = ev.hora_desde || ev.hora_inicio;
+          const hFin = ev.hora_hasta || ev.hora_fin;
 
-            return (
-              <motion.article
-                key={ev.id}
-                className="emp-card hover-raise"
-                initial={{ y: 12, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-              >
-                <div className="emp-card__media">
-                  <img className="media-img" src={img0} onError={onImgError} alt={title} loading="lazy" />
-                  {avatar ? (
-                    <img className="emp-card__avatar" src={avatar} alt="Empresa" />
-                  ) : (
-                    <div className="emp-card__avatar emp-card__avatar--fallback">🏷️</div>
-                  )}
-                </div>
+          return (
+            <motion.article
+              key={ev.id}
+              className="emp-card hover-raise"
+              initial={{ y: 12, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+            >
+              <div className="emp-card__media">
+                <img className="media-img" src={img0} onError={onImgError} alt={title} loading="lazy" />
+                {avatar ? (
+                  <img className="emp-card__avatar" src={avatar} alt="Empresa" />
+                ) : (
+                  <div className="emp-card__avatar emp-card__avatar--fallback">🏷️</div>
+                )}
+              </div>
 
-                <div className="emp-card__body">
-                  <h4 className="emp-card__title">{title}</h4>
-                  <p className="emp-card__desc">
-                    {desc ? desc : <span style={{ opacity: .65 }}>Sin descripción</span>}
-                  </p>
-                  {(fIni || fFin || hIni || hFin) && (
-                    <div style={{ marginTop: 6, fontSize: 13, color: "#6b7280" }}>
-                      {fmtDate(fIni)} {timeHHMM(hIni)} {(fFin || hFin) && "—"} {fmtDate(fFin)} {timeHHMM(hFin)}
-                    </div>
-                  )}
-                </div>
+              <div className="emp-card__body">
+                <h4 className="emp-card__title">{title}</h4>
+                <p className="emp-card__desc">
+                  {desc ? desc : <span style={{ opacity: .65 }}>Sin descripción</span>}
+                </p>
+                {(fIni || fFin || hIni || hFin) && (
+                  <div style={{ marginTop: 6, fontSize: 13, color: "#6b7280" }}>
+                    {fmtDate(fIni)} {timeHHMM(hIni)} {(fFin || hFin) && "—"} {fmtDate(fFin)} {timeHHMM(hFin)}
+                  </div>
+                )}
+              </div>
 
-                <footer className="emp-card__actions">
-                  <button className="icon-btn" title="Editar" onClick={() => handleEditEv(ev.id)}>✏️</button>
-                  <button className="icon-btn" title="Eliminar" onClick={() => handleDeleteEv(ev.id)}>🗑️</button>
-                  <button className="icon-btn" title="Ver" onClick={() => handleViewEv(ev.id)} aria-label={`Ver ${title}`}>👁️</button>
-                </footer>
-              </motion.article>
-            );
-          })}
+              <footer className="emp-card__actions">
+                <button className="icon-btn" title="Editar" onClick={() => handleEditEv(ev.id)}>✏️</button>
+                <button className="icon-btn" title="Eliminar" onClick={() => handleDeleteEv(ev.id)}>🗑️</button>
+                <button className="icon-btn" title="Ver" onClick={() => handleViewEv(ev.id)} aria-label={`Ver ${title}`}>👁️</button>
+              </footer>
+            </motion.article>
+          );
+        })}
         </div>
       </section>
 

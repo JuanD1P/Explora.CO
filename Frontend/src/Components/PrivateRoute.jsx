@@ -6,6 +6,7 @@ const PrivateRoute = ({ children, allowedRoles }) => {
     const role = localStorage.getItem('user-role');
 
 
+
     if (!token || !allowedRoles.includes(role)) {
         console.warn("Acceso denegado. Redirigiendo a /userlogin");
         return <Navigate to="/userlogin" />;

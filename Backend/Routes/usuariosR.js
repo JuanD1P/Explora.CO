@@ -43,35 +43,39 @@ router.post('/register', async (req, res) => {
 
 // 🚀 LOGIN DE USUARIOS
 router.post('/userlogin', (req, res) => {
-    const { email, password } = req.body;
-    
-    const sql = "SELECT * FROM usuarios WHERE email = ?";
-    con.query(sql, [email], async (err, result) => {
-        if (err) {
-            console.error("❌ Error en la consulta:", err);
-            return res.json({ loginStatus: false, Error: "Error en la base de datos" });
-        }
-        if (result.length === 0) {
-            return res.json({ loginStatus: false, Error: "Usuario no encontrado" });
-        }
+  const { email, password } = req.body;
+  const sql = "SELECT * FROM usuarios WHERE email = ?";
 
-        try {
-            const validPassword = await bcrypt.compare(password, result[0].password);
-            if (!validPassword) {
-                return res.json({ loginStatus: false, Error: "Contraseña incorrecta" });
-            }
+  con.query(sql, [email], async (err, result) => {
+    if (err) return res.json({ loginStatus: false, Error: "Error en la base de datos" });
+    if (result.length === 0) return res.json({ loginStatus: false, Error: "Usuario no encontrado" });
 
-            // Crear el token con el rol
-            const token = jwt.sign({ role: result[0].rol, email: email }, "jwt_secret_key", { expiresIn: '1d' });
-            
-            res.cookie('token', token, { httpOnly: true }); // Opción para cookies seguras
-            return res.json({ loginStatus: true, role: result[0].rol, token }); // ⬅ Ahora enviamos el token también
+    try {
+      const user = result[0];
+      const validPassword = await bcrypt.compare(password, user.password);
+      if (!validPassword) return res.json({ loginStatus: false, Error: "Contraseña incorrecta" });
 
-        } catch (error) {
-            console.error("❌ Error en login:", error);
-            return res.json({ loginStatus: false, Error: "Error interno" });
-        }
-    });
+      // Incluye el id en el token (opcional pero recomendado)
+      const token = jwt.sign(
+        { id: user.id, role: user.rol, email: user.email },
+        "jwt_secret_key",
+        { expiresIn: '1d' }
+      );
+
+      res.cookie('token', token, { httpOnly: true });
+
+      // ⬇️ ¡Enviamos también el id explícitamente!
+      return res.json({
+        loginStatus: true,
+        role: user.rol,
+        token,
+        id: user.id,               // <-- clave
+        nombre: user.nombre_completo
+      });
+    } catch (error) {
+      return res.json({ loginStatus: false, Error: "Error interno" });
+    }
+  });
 });
 
 
@@ -164,5 +168,7 @@ router.get('/usuarios', (req, res) => {
         res.json(result);
     });
 });
+
+
 
 

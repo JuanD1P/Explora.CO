@@ -31,8 +31,8 @@ const CATEGORIAS = [
   "Atractivos Históricos",
 ];
 
-// ⚠️ reemplaza por el id real del usuario EMPRESA autenticado
-const EMPRESA_ID = 3;
+const EMPRESA_ID = parseInt(localStorage.getItem("user-id"), 10);
+
 
 // Validación simple
 const MAX_MB = 10;
