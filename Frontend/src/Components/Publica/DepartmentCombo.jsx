@@ -1,3 +1,6 @@
+/*COMBO PARA LA BUSQUEDA DE LA NAVBAR 
+DEPARTAMENTOS Y PERFIL */
+
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 export default function DepartmentCombo({

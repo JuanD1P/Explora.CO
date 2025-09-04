@@ -1,10 +1,15 @@
+/*VISTA PRINCIPAL DEL ADMINISTRADOR*/ 
+/*SE MANEJA TODA LA LOGICA DE GESTION DE USUARIOS
+ELIMINAR, CREAR Y MODIFICARLOS Y SE DA EL ACCESO A LAS
+DEMAS VISTAS------------------------------------------*/
+
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import "@sweetalert2/themes/borderless/borderless.css";
 import logo from "../ImagenesP/ImagenesLogin/ADMINLOGO.png";
-import "./DOCSS/Admin.css";
+import "../DOCSS/Admin.css";
 
 axios.defaults.withCredentials = true;
 

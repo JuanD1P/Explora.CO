@@ -1,7 +1,11 @@
+/*----------------------VISTA INICIO EMPRESA----------------
+VISTA PRINCIPAL DEL INICIO DE LA EMPRESA EN DONDE SE MUESTRAN PUBLICACIONES 
+Y EVENTOS CREADOS X EL USUARIO---------------------------*/
+
 import React from "react";
 import { motion } from "framer-motion";
 import { useNavigate, Link } from "react-router-dom";
-import "./DOCSS/InicioEmpresa.css";
+import "../DOCSS/InicioEmpresa.css";
 import imgDemo from "../ImagenesP/InicioUsuario/ImagenPrueba.png";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000/api";
@@ -45,19 +49,12 @@ const IconPlus = (props) => (
 const InicioE = () => {
   const navigate = useNavigate();
 
-  /* ========== Sesión: empresaId desde localStorage ========== */
   const empresaId = React.useMemo(() => {
     const v = Number(localStorage.getItem("user-id"));
     return Number.isFinite(v) ? v : null;
   }, []);
 
-  /* Si quieres forzar login cuando no hay id, descomenta:
-  React.useEffect(() => {
-    if (empresaId === null) navigate("/login");
-  }, [empresaId, navigate]);
-  */
 
-  /* Si el user-id cambia en otra pestaña, recarga la vista */
   React.useEffect(() => {
     const onStorage = (e) => {
       if (e.key === "user-id") window.location.reload();
@@ -66,19 +63,19 @@ const InicioE = () => {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  /* Publicaciones (perfiles) */
+  /* Publicaciones  */
   const [items, setItems] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
-  const [detail, setDetail] = React.useState(null); // modal de perfil
+  const [detail, setDetail] = React.useState(null); 
 
   /* Eventos */
   const [eventos, setEventos] = React.useState([]);
   const [loadingEv, setLoadingEv] = React.useState(true);
   const [errorEv, setErrorEv] = React.useState("");
-  const [detailEv, setDetailEv] = React.useState(null); // modal de evento
+  const [detailEv, setDetailEv] = React.useState(null); 
 
-  /* Cargar publicaciones (SOLO las mías) */
+  /* Cargar publicaciones  */
   React.useEffect(() => {
     (async () => {
       try {
@@ -102,7 +99,7 @@ const InicioE = () => {
     })();
   }, [empresaId]);
 
-  /* Cargar eventos (SOLO los míos) */
+  /* Cargar eventos  */
   React.useEffect(() => {
     (async () => {
       try {
@@ -126,7 +123,6 @@ const InicioE = () => {
     })();
   }, [empresaId]);
 
-  /* ESC para cerrar modales */
   React.useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Escape") {
@@ -162,7 +158,7 @@ const InicioE = () => {
       const res = await fetch(`${API_BASE}/eventos/${id}`, { credentials: "include" });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "No se pudo cargar el evento");
-      setDetailEv(data); // viene { ...evento, fotos:[] }
+      setDetailEv(data); 
     } catch (e) {
       alert(e.message || "Error al cargar detalles");
     }

@@ -1,3 +1,5 @@
+/*LOGICA EMPRESAS AVATAR*/
+
 import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
@@ -7,15 +9,12 @@ import mysql from 'mysql2/promise';
 
 const router = Router();
 
-// __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// carpeta /uploads
 const uploadsDir = path.resolve(__dirname, '../uploads');
 fs.mkdirSync(uploadsDir, { recursive: true });
 
-// Multer para un solo archivo "avatar"
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
@@ -34,7 +33,7 @@ const upload = multer({
   },
 });
 
-// Pool MySQL
+
 const pool = mysql.createPool({
   host: 'localhost',
   user: 'root',
@@ -44,14 +43,13 @@ const pool = mysql.createPool({
   connectionLimit: 10,
 });
 
-// POST /api/empresa/avatar  (form-data: empresa_id, avatar)
+// AVATAR EMPRESA
 router.post('/empresa/avatar', upload.single('avatar'), async (req, res) => {
   try {
     const empresa_id = Number(req.body.empresa_id || req.user?.id);
     if (!empresa_id) return res.status(400).json({ error: 'empresa_id requerido' });
     if (!req.file) return res.status(400).json({ error: 'Falta el archivo avatar' });
 
-    // validar rol
     const [u] = await pool.query('SELECT rol FROM usuarios WHERE id = ?', [empresa_id]);
     if (!u.length || u[0].rol !== 'EMPRESA') {
       return res.status(403).json({ error: 'El usuario no es EMPRESA' });

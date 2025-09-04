@@ -1,3 +1,5 @@
+/*RUTA EN CASO DE ERROR 404, RUTA NO ENCINTRADA*/
+
 import React from "react";
 import { Link } from "react-router-dom";
 

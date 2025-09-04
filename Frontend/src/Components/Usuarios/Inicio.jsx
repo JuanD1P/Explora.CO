@@ -1,5 +1,7 @@
+/*VISTA DE INICIO DE UN USUARIO NORMAL*/
+
 import React, { useMemo, useRef, useEffect, useState } from "react";
-import "./DOCSS/Inicio.css";
+import "../DOCSS/Inicio.css";
 import imgDemo from "../ImagenesP/InicioUsuario/ImagenPrueba.png";
 
 const slugify = (s) =>

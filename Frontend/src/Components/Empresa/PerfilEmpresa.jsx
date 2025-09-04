@@ -1,6 +1,9 @@
+/*----------------CREACION DE PUBLICACIONES------------
+FORMULARUO PARA LA CREACION DE LAS PUBLICACIONES NUEVAS*/
+
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import "./DOCSS/PerfilEmpresa.css";
+import "../DOCSS/PerfilEmpresa.css";
 import "leaflet/dist/leaflet.css";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
@@ -8,7 +11,6 @@ import L from "leaflet";
 const API_URL = "http://localhost:3000";
 const UPLOADS_HOST = "http://localhost:3000"; 
 
-// Fix de iconos de Leaflet en bundlers
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -34,7 +36,6 @@ const CATEGORIAS = [
 const EMPRESA_ID = parseInt(localStorage.getItem("user-id"), 10);
 
 
-// Validación simple
 const MAX_MB = 10;
 const ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
 
@@ -91,7 +92,7 @@ const PerfilEmpresa = () => {
     return okType && okSize;
   };
 
-  // ------- Avatar (preview + subir) -------
+  // ------- Avatar  -------
   const onPickAvatar = (e) => {
     const f = e.target.files?.[0] || null;
     if (!f || !fileIsOk(f)) return;
@@ -229,7 +230,7 @@ const PerfilEmpresa = () => {
     })();
   }, [isEdit, id]);
 
-  // ------- Enviar (crear o guardar cambios) -------
+  // ------- Enviar  -------
   const onSubmit = async (e) => {
     e.preventDefault();
 
@@ -264,7 +265,7 @@ const PerfilEmpresa = () => {
     formData.append("precio_hasta", precioHasta || "");
     formData.append("info_precios", infoPrecios || "");
 
-    // nuevas fotos (la principal nueva va primero)
+    // nuevas fotos
     if (fotoPrincipal) formData.append("fotos", fotoPrincipal);
     fotosExtra.forEach(({ file }) => formData.append("fotos", file));
 
@@ -446,12 +447,11 @@ const PerfilEmpresa = () => {
               <h3>Fotos del lugar</h3>
             </div>
 
-            {/* Foto principal: si hay en BD o el usuario elige una nueva */}
+            {/* Foto principal */}
             <div className="field">
               <label>Foto principal</label>
 
               {!fotoPrincipalPreview ? (
-                // si no hay preview, podríamos estar en crear sin foto; en edición ya pusimos preview desde BD
                 <div
                   className="pe-dropzone"
                   onClick={() => principalInputRef.current?.click()}
@@ -506,7 +506,6 @@ const PerfilEmpresa = () => {
               )}
             </div>
 
-            {/* Galería: primero las existentes (solo lectura), luego las nuevas que agregue el usuario */}
             {isEdit && fotosExistentes.length > 0 && (
               <div className="field">
                 <label>Fotos existentes</label>

@@ -1,7 +1,9 @@
+/*NAVBAR CON FUNCIONALIDADES PARA EL ROL DE USUARIOS*/
+
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../ImagenesP/InicioUsuario/LOGOFOOTER.png";
-import "./DOCSS/Navbar.css";
+import "../DOCSS/Navbar.css";
 import DepartmentCombo from "./DepartmentCombo";
 import adminLogo from "../ImagenesP/ImagenesLogin/ADMINLOGO.png";
 

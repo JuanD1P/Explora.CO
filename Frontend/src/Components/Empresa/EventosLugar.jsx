@@ -1,10 +1,13 @@
+/* ---------------------- EVENTOS ------------------
+ESTA VISTA ES LA ENCARGADA D ECREAR EVENTOS CON 
+RESPECTO A UNA PUBLICACION ---------------------*/
+
 import React, { useEffect, useRef, useState } from "react";
-import "./DOCSS/PerfilEmpresa.css"; 
+import "../DOCSS/PerfilEmpresa.css"; 
 
 const API_URL = "http://localhost:3000";
-const EMPRESA_ID = 3;
+const EMPRESA_ID = parseInt(localStorage.getItem("user-id"), 10);
 
-// Validación simple
 const MAX_MB = 10;
 const ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
 
@@ -14,7 +17,6 @@ export default function EventosLugar() {
   const [nombreEvento, setNombreEvento] = useState("");
   const [descripcion, setDescripcion] = useState("");
 
-  // Fotos
   const [fotoPrincipal, setFotoPrincipal] = useState(null);
   const [fotoPrincipalPreview, setFotoPrincipalPreview] = useState(null);
   const principalInputRef = useRef(null);
@@ -25,7 +27,6 @@ export default function EventosLugar() {
   const [enviando, setEnviando] = useState(false);
   const [eventos, setEventos] = useState([]);
 
-  // ===== helpers =====
   const fileIsOk = (f) => {
     const okType = ACCEPTED.includes(f.type);
     const okSize = f.size <= MAX_MB * 1024 * 1024;
@@ -34,7 +35,6 @@ export default function EventosLugar() {
     return okType && okSize;
   };
 
-  // ===== fetch =====
   const cargarLugares = async () => {
     const res = await fetch(`${API_URL}/api/perfiles?empresa_id=${EMPRESA_ID}`, { credentials: "include" });
     const data = await res.json();
@@ -54,7 +54,6 @@ export default function EventosLugar() {
   React.useEffect(() => { cargarLugares(); }, []);
   React.useEffect(() => { if (perfilId) cargarEventos(perfilId); }, [perfilId]);
 
-  // ===== handlers fotos =====
   const onPickPrincipal = (fileOrEvent) => {
     const file = fileOrEvent?.target ? (fileOrEvent.target.files?.[0] || null) : fileOrEvent;
     if (!file || !fileIsOk(file)) return;
@@ -71,7 +70,6 @@ export default function EventosLugar() {
 
   const removeExtraAt = (i) => setFotosExtra((prev) => prev.filter((_, idx) => idx !== i));
 
-  // ===== submit =====
   const onSubmit = async (e) => {
     e.preventDefault();
     if (!perfilId) return alert("Selecciona un lugar");
@@ -95,7 +93,6 @@ export default function EventosLugar() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Error creando evento");
 
-      // limpiar
       setNombreEvento("");
       setDescripcion("");
       setFotoPrincipal(null);
@@ -168,7 +165,6 @@ export default function EventosLugar() {
             <h3>Fotos del evento</h3>
           </div>
 
-          {/* Foto principal: DROPZONE */}
           <div className="field">
             <label>Foto principal</label>
 
@@ -194,7 +190,6 @@ export default function EventosLugar() {
                 </div>
                 <small className="pe-hint">JPG/PNG/WEBP • máx. {MAX_MB}MB</small>
 
-                {/* input file nativo oculto */}
                 <input
                   ref={principalInputRef}
                   type="file"
@@ -233,7 +228,6 @@ export default function EventosLugar() {
             )}
           </div>
 
-          {/* Más fotos */}
           <div className="field">
             <label>Más fotos (opcional)</label>
 
@@ -281,7 +275,6 @@ export default function EventosLugar() {
         </div>
       </form>
 
-      {/* Lista de eventos */}
       {Array.isArray(eventos) && eventos.length > 0 && (
         <section className="pe-list card-3d" style={{ maxWidth: 1000 }}>
           <h4 className="pe-list__title">Eventos creados</h4>

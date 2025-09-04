@@ -1,8 +1,10 @@
+/*LOGIN VISTA INICIAL AL ENTRAR AL APLICATIVO*/
+
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import logo from '../ImagenesP/ImagenesLogin/LOGOCO.png';
-import './DOCSS/Login.css';
+import '../DOCSS/Login.css';
 
 const Login = () => {
     const [values, setValues] = useState({

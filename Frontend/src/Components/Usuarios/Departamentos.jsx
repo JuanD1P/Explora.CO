@@ -1,7 +1,8 @@
+/*VISTA DONDE SE MANEJA LA INFORMACION DE LOS DEPARTAMENTOS CON LA RELACION DE SU MUNICIPIO*/
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import "./DOCSS/Departamentos.css";
+import "../DOCSS/Departamentos.css";
 import imgDemo from "../ImagenesP/InicioUsuario/ImagenPrueba.png";
 
 const COL_JSON =

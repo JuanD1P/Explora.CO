@@ -1,3 +1,5 @@
+/*VISTA PARA CREAR VALORACIONES DE UN LUGAR*/
+
 import React, { useEffect, useState } from 'react';
 const API_URL = 'http://localhost:3000';
 
