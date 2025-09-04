@@ -52,7 +52,8 @@ img { display: block; max-width: 100% }
   background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.86)); /* efecto glass suave */
   backdrop-filter: blur(8px);
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: auto auto;
+  justify-content: center;
   align-items: center;
   box-shadow: 0 8px 24px rgba(17,24,39,.08), inset 0 1px 0 rgba(255,255,255,.7);
 }
@@ -63,8 +64,8 @@ img { display: block; max-width: 100% }
   display:flex; align-items:center; gap:.6rem;
   color: var(--emp-accent);
   text-decoration: none;
-  font-size: 1.35rem;
-  font-weight: 700;
+  font-size: 1.80rem;
+  font-weight: bold;
 }
 .emp-logo{ font-size: 28px }
 

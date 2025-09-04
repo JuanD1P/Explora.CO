@@ -87,14 +87,6 @@ const InicioE = () => {
           <span className="emp-logo" aria-hidden>🏢</span>
           <strong>Panel de Empresa</strong>
         </div>
-        <nav className="emp-nav">
-          {/* Usa Link para SPA sin recargar */}
-          <Link to="/InicioEmpresa" className="emp-link">Inicio</Link>
-          <Link to="/empresa/mis-publicaciones" className="emp-link">Mis publicaciones</Link>
-          <Link to="/empresa/estadisticas" className="emp-link">Estadísticas</Link>
-          <Link to="/ayuda" className="emp-link">Ayuda</Link>
-          <button className="emp-avatar" aria-label="Perfil de empresa">👤</button>
-        </nav>
       </header>
 
       {/* HERO DE ACCIONES */}
