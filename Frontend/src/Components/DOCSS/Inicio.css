@@ -222,3 +222,20 @@ img{max-width:100%;display:block}
   .ini-hero .ini-hero__img{ animation: none !important; transition: none !important; }
   .ini-carousel .ini-thumb img{ animation: none !important; }
 }
+
+.ini-carousel .carousel__track{ grid-auto-columns: 82%; }
+@media (min-width:540px){ .ini-carousel .carousel__track{ grid-auto-columns: 48%; } }
+@media (min-width:900px){ .ini-carousel .carousel__track{ grid-auto-columns: 31.5%; } }
+
+.deps__track{ grid-auto-columns: 86%; }
+@media (min-width:520px){  .deps__track{ grid-auto-columns: 66%; } }
+@media (min-width:900px){  .deps__track{ grid-auto-columns: 40%; } }
+@media (min-width:1200px){ .deps__track{ grid-auto-columns: 28%; } }
+@media (min-width:1440px){ .deps__track{ grid-auto-columns: 23.5%; } }
+
+@media (prefers-reduced-motion: reduce){
+  .carousel__track{ scroll-behavior: auto; }
+  .img-smart, .carousel__nav{ transition: none !important; }
+  .ini-hero .ini-hero__img{ animation: none !important; transition: none !important; }
+  .ini-carousel .ini-thumb img{ animation: none !important; }
+}
