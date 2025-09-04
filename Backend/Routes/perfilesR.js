@@ -5,15 +5,20 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import mysql from 'mysql2/promise';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const router = Router();
 
-// __dirname
+// __dirname (debe ir ANTES de usarlo)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// carpeta /uploads
-const uploadsDir = path.resolve(__dirname, '../uploads');
+// ✅ uploadsDir: toma .env o cae a ../uploads (SOLO UNA VEZ)
+const uploadsDir = process.env.UPLOADS_DIR
+  ? path.resolve(process.env.UPLOADS_DIR)
+  : path.resolve(__dirname, '../uploads');
+
 fs.mkdirSync(uploadsDir, { recursive: true });
 
 // Multer para múltiples fotos (campo: "fotos")
@@ -101,11 +106,8 @@ router.post('/empresa/avatar', upload.single('avatar'), async (req, res) => {
 router.post('/perfiles', upload.array('fotos', 10), async (req, res) => {
   const conn = await pool.getConnection();
   try {
-    // si tienes auth, puedes usar req.user?.id en vez de empresa_id del body
     const empresa_id = Number(req.body.empresa_id || req.user?.id);
-    if (!empresa_id) {
-      return res.status(400).json({ error: 'empresa_id requerido' });
-    }
+    if (!empresa_id) return res.status(400).json({ error: 'empresa_id requerido' });
 
     // validar que sea EMPRESA
     const [urows] = await conn.query('SELECT rol FROM usuarios WHERE id = ?', [empresa_id]);
@@ -425,5 +427,303 @@ router.delete('/perfiles/:id', async (req, res) => {
     conn.release();
   }
 });
+
+// GET /api/perfiles  (reemplaza la consulta por esta)
+router.get('/perfiles', async (req, res) => {
+  try {
+    const empresaId = req.query.empresa_id ? Number(req.query.empresa_id) : null;
+
+    const sql = `
+      SELECT p.*, u.avatar_url
+      FROM perfilempresa p
+      LEFT JOIN usuarios u ON u.id = p.empresa_id
+      ${empresaId ? 'WHERE p.empresa_id = ?' : ''}
+      ORDER BY p.created_at DESC
+    `;
+    const params = empresaId ? [empresaId] : [];
+    const [perfiles] = await pool.query(sql, params);
+
+    const ids = perfiles.map(p => p.id);
+    let fotos = [];
+    if (ids.length) {
+      const [rows] = await pool.query(
+        `SELECT * FROM perfilempresa_fotos WHERE perfil_id IN (${ids.map(() => '?').join(',')})`,
+        ids
+      );
+      fotos = rows;
+    }
+
+    const byPerfil = new Map();
+    for (const p of perfiles) byPerfil.set(p.id, { ...p, fotos: [] });
+    for (const f of fotos) byPerfil.get(f.perfil_id)?.fotos.push(f);
+
+    res.json(Array.from(byPerfil.values()));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error listando perfiles' });
+  }
+});
+
+// GET /api/perfiles/:id  (reemplaza por esta)
+router.get('/perfiles/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ error: 'id inválido' });
+
+    const sql = `
+      SELECT p.*, u.avatar_url
+      FROM perfilempresa p
+      LEFT JOIN usuarios u ON u.id = p.empresa_id
+      WHERE p.id = ?
+    `;
+    const [[perfil]] = await pool.query(sql, [id]);
+    if (!perfil) return res.status(404).json({ error: 'Perfil no encontrado' });
+
+    const [fotos] = await pool.query('SELECT * FROM perfilempresa_fotos WHERE perfil_id = ?', [id]);
+    res.json({ ...perfil, fotos });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error obteniendo perfil' });
+  }
+});
+
+// DELETE /api/perfiles/:id  (elimina fotos + registro)
+router.delete('/perfiles/:id', async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ error: 'id inválido' });
+
+    const [[perfil]] = await conn.query('SELECT * FROM perfilempresa WHERE id = ?', [id]);
+    if (!perfil) return res.status(404).json({ error: 'No existe' });
+
+    // (opcional) si tienes auth: valida dueño aquí con req.user
+    // if (req.user?.rol === 'EMPRESA' && req.user.id !== perfil.empresa_id) {
+    //   return res.status(403).json({ error: 'No autorizado' });
+    // }
+
+    const [fotos] = await conn.query('SELECT * FROM perfilempresa_fotos WHERE perfil_id = ?', [id]);
+
+    await conn.beginTransaction();
+    await conn.query('DELETE FROM perfilempresa_fotos WHERE perfil_id = ?', [id]);
+    await conn.query('DELETE FROM perfilempresa WHERE id = ?', [id]);
+    await conn.commit();
+
+    // intenta borrar archivos físicos (si existen)
+    for (const f of fotos) {
+      try {
+        // f.imagen_url => "/uploads/XXXXXXXX.jpg"
+        const fname = path.basename(f.imagen_url);
+        fs.unlink(path.join(uploadsDir, fname), () => {});
+      } catch {}
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    try { await conn.rollback(); } catch {}
+    res.status(500).json({ error: 'Error eliminando' });
+  } finally {
+    conn.release();
+  }
+});
+
+
+// PUT /api/perfiles/:id  -> actualiza campos y añade fotos nuevas (no borra las existentes)
+router.put('/perfiles/:id', upload.array('fotos', 10), async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const perfilId = Number(req.params.id);
+    if (!perfilId) return res.status(400).json({ error: 'id inválido' });
+
+    // Traer perfil
+    const [[perfil]] = await conn.query('SELECT * FROM perfilempresa WHERE id = ?', [perfilId]);
+    if (!perfil) return res.status(404).json({ error: 'Perfil no encontrado' });
+
+    // Si tienes auth, valida propietario:
+    // const empresa_id = req.user?.id;
+    // if (!empresa_id || empresa_id !== perfil.empresa_id) return res.status(403).json({ error: 'No autorizado' });
+
+    // Leer body
+    const {
+      nombre_lugar,
+      categoria,
+      descripcion,
+      ciudad,
+      direccion,
+      lat,
+      lng,
+      horario_desde,
+      horario_hasta,
+      moneda,
+      precio_desde,
+      precio_hasta,
+      info_precios
+    } = req.body;
+
+    // En este flujo pedimos todos los obligatorios (tu formulario los envía)
+    if (!nombre_lugar || !categoria || !ciudad || !direccion || !lat || !lng) {
+      return res.status(400).json({ error: 'Faltan campos obligatorios' });
+    }
+    if (!CATS.has(categoria)) return res.status(400).json({ error: 'Categoría no válida' });
+
+    // Validaciones simples
+    if ((horario_desde && !horario_hasta) || (!horario_desde && horario_hasta)) {
+      return res.status(400).json({ error: 'Debes enviar horario_desde y horario_hasta juntos o ninguno' });
+    }
+    if (horario_desde && horario_hasta && horario_desde >= horario_hasta) {
+      return res.status(400).json({ error: 'El horario_desde debe ser menor que horario_hasta' });
+    }
+
+    const pDesde = precio_desde !== undefined && precio_desde !== null && `${precio_desde}` !== '' ? Number(precio_desde) : null;
+    const pHasta = precio_hasta !== undefined && precio_hasta !== null && `${precio_hasta}` !== '' ? Number(precio_hasta) : null;
+    if ((pDesde !== null && pDesde < 0) || (pHasta !== null && pHasta < 0)) {
+      return res.status(400).json({ error: 'Los precios no pueden ser negativos' });
+    }
+    if (pDesde !== null && pHasta !== null && pDesde > pHasta) {
+      return res.status(400).json({ error: 'precio_desde no puede ser mayor a precio_hasta' });
+    }
+
+    await conn.beginTransaction();
+
+    await conn.query(
+      `UPDATE perfilempresa SET
+         nombre_lugar = ?, categoria = ?, descripcion = ?, ciudad = ?, direccion = ?,
+         lat = ?, lng = ?, horario_desde = ?, horario_hasta = ?, moneda = ?, precio_desde = ?, precio_hasta = ?, info_precios = ?
+       WHERE id = ?`,
+      [
+        nombre_lugar, categoria, (descripcion || null), ciudad, direccion,
+        Number(lat), Number(lng),
+        (horario_desde || null), (horario_hasta || null),
+        (moneda || 'COP'),
+        pDesde, pHasta, (info_precios || null),
+        perfilId
+      ]
+    );
+
+    // Si llegaron fotos nuevas, se agregan
+    const files = req.files || [];
+    for (const f of files) {
+      const url = `/uploads/${f.filename}`;
+      await conn.query(
+        'INSERT INTO perfilempresa_fotos (perfil_id, imagen_url) VALUES (?, ?)',
+        [perfilId, url]
+      );
+    }
+
+    await conn.commit();
+
+    // devolver actualizado
+    const [[perfilUpd]] = await conn.query(
+      'SELECT p.*, u.avatar_url FROM perfilempresa p LEFT JOIN usuarios u ON u.id = p.empresa_id WHERE p.id = ?',
+      [perfilId]
+    );
+    const [fotosUpd] = await conn.query('SELECT * FROM perfilempresa_fotos WHERE perfil_id = ?', [perfilId]);
+
+    res.json({ perfil: perfilUpd, fotos: fotosUpd });
+  } catch (err) {
+    console.error(err);
+    try { await conn.rollback(); } catch {}
+    res.status(500).json({ error: 'Error actualizando perfil' });
+  } finally {
+    conn.release();
+  }
+});
+
+// PUT /api/perfiles/:id  -> actualizar datos del perfil + agrega nuevas fotos (si envías)
+router.put('/perfiles/:id', upload.array('fotos', 10), async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ error: 'id inválido' });
+
+    const {
+      nombre_lugar, categoria, descripcion, ciudad, direccion,
+      lat, lng, horario_desde, horario_hasta, moneda,
+      precio_desde, precio_hasta, info_precios
+    } = req.body;
+
+    if (!nombre_lugar || !categoria || !ciudad || !direccion || !lat || !lng) {
+      return res.status(400).json({ error: 'Faltan campos obligatorios' });
+    }
+    if (!CATS.has(categoria)) return res.status(400).json({ error: 'Categoría no válida' });
+    if ((horario_desde && !horario_hasta) || (!horario_desde && horario_hasta)) {
+      return res.status(400).json({ error: 'Debes enviar horario_desde y horario_hasta juntos o ninguno' });
+    }
+    if (horario_desde && horario_hasta && horario_desde >= horario_hasta) {
+      return res.status(400).json({ error: 'El horario_desde debe ser menor que horario_hasta' });
+    }
+
+    const pDesde = precio_desde ? Number(precio_desde) : null;
+    const pHasta = precio_hasta ? Number(precio_hasta) : null;
+    if ((pDesde !== null && pDesde < 0) || (pHasta !== null && pHasta < 0)) {
+      return res.status(400).json({ error: 'Los precios no pueden ser negativos' });
+    }
+    if (pDesde !== null && pHasta !== null && pDesde > pHasta) {
+      return res.status(400).json({ error: 'precio_desde no puede ser mayor a precio_hasta' });
+    }
+
+    await conn.beginTransaction();
+
+    await conn.query(
+      `UPDATE perfilempresa SET
+        nombre_lugar=?, categoria=?, descripcion=?, ciudad=?, direccion=?, lat=?, lng=?,
+        horario_desde=?, horario_hasta=?, moneda=?, precio_desde=?, precio_hasta=?, info_precios=?
+       WHERE id=?`,
+      [
+        nombre_lugar, categoria, descripcion || null, ciudad, direccion,
+        Number(lat), Number(lng),
+        horario_desde || null, horario_hasta || null, (moneda || 'COP'),
+        pDesde, pHasta, info_precios || null,
+        id
+      ]
+    );
+
+    // Si llegaron nuevas fotos, las agregamos (no borramos las existentes)
+    const files = req.files || [];
+    for (const f of files) {
+      const url = `/uploads/${f.filename}`;
+      await conn.query(
+        'INSERT INTO perfilempresa_fotos (perfil_id, imagen_url) VALUES (?, ?)',
+        [id, url]
+      );
+    }
+
+    await conn.commit();
+
+    const [[perfil]] = await conn.query('SELECT * FROM perfilempresa WHERE id=?', [id]);
+    const [fotos]    = await conn.query('SELECT * FROM perfilempresa_fotos WHERE perfil_id=?', [id]);
+    res.json({ ...perfil, fotos });
+  } catch (err) {
+    console.error(err);
+    try { await conn.rollback(); } catch {}
+    res.status(500).json({ error: 'Error actualizando perfil' });
+  } finally {
+    conn.release();
+  }
+});
+
+// (Opcional) DELETE /api/perfiles/:id  -> usado por tu frontend
+router.delete('/perfiles/:id', async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ error: 'id inválido' });
+
+    await conn.beginTransaction();
+    await conn.query('DELETE FROM perfilempresa_fotos WHERE perfil_id=?', [id]);
+    await conn.query('DELETE FROM perfilempresa WHERE id=?', [id]);
+    await conn.commit();
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    try { await conn.rollback(); } catch {}
+    res.status(500).json({ error: 'Error eliminando perfil' });
+  } finally {
+    conn.release();
+  }
+});
+
+
 
 export const perfilesRouter = router;

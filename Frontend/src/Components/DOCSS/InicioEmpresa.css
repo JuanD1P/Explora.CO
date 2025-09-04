@@ -261,3 +261,53 @@ img { display: block; max-width: 100% }
   text-align: center;
   box-shadow: 0 -1px 0 var(--emp-border);
 }
+
+/* Avatar encima de la imagen de la card */
+.emp-card__media { position: relative; }
+.emp-card__avatar{
+  position: absolute; bottom: 8px; left: 8px;
+  width: 42px; height: 42px; border-radius: 999px;
+  border: 2px solid #fff; background: #fff; object-fit: cover;
+  box-shadow: 0 4px 12px rgba(0,0,0,.12);
+  display: block;
+}
+.emp-card__avatar--fallback{
+  position: absolute; bottom: 8px; left: 8px;
+  width: 42px; height: 42px; border-radius: 999px;
+  border: 2px solid #fff; background: #fff; display:grid; place-items:center;
+  color: var(--emp-accent);
+}
+
+/* Modal de detalle */
+.emp-modal__backdrop{
+  position: fixed; inset: 0; background: rgba(17,24,39,.35);
+  display: grid; place-items: center; z-index: 50;
+}
+.emp-modal{
+  width: min(920px, 92vw); background: #fff; border-radius: 16px; overflow: hidden;
+  display: grid; grid-template-columns: 1.2fr 1fr; gap: 0; box-shadow: 0 20px 60px rgba(17,24,39,.35);
+}
+@media (max-width: 860px){
+  .emp-modal{ grid-template-columns: 1fr; }
+}
+.emp-modal__media{ position: relative; background: #f3f4f6; }
+.emp-modal__media img{ width: 100%; height: 100%; max-height: 420px; object-fit: cover; display: block; }
+.emp-modal__avatar{
+  position: absolute; bottom: 10px; left: 10px; width: 56px; height: 56px;
+  border-radius: 999px; border: 2px solid #fff; object-fit: cover; background: #fff;
+  box-shadow: 0 6px 18px rgba(0,0,0,.18);
+}
+.emp-modal__body{ padding: 16px 16px 18px; }
+.emp-detail-row{
+  display: grid; grid-template-columns: 120px 1fr; gap: 10px;
+  padding: 8px 0; border-bottom: 1px dashed #eee;
+}
+.emp-detail-row:last-child{ border-bottom: 0 }
+.emp-detail-label{ color: var(--emp-muted); font-weight: 600 }
+.emp-detail-value{ color: var(--emp-text) }
+.emp-modal__actions{ margin-top: 14px; display:flex; justify-content:flex-end }
+
+/* asegura que la imagen principal no herede radios raros */
+.emp-card__media { position: relative; overflow: hidden; }
+.emp-card__media .media-img { width:100%; height:180px; object-fit:cover; border-radius:0 !important; display:block; }
+.emp-modal__media .media-img { width:100%; height:100%; max-height:420px; object-fit:cover; border-radius:0 !important; display:block; }
