@@ -394,7 +394,6 @@ const PerfilEmpresa = () => {
           <div className="pe-block">
             <div className="pe-block__head">
               <h3>Horarios</h3>
-              <p>Déjalos vacíos si no quieres mostrar un horario fijo</p>
             </div>
 
             <div className="pe-row">
@@ -415,7 +414,6 @@ const PerfilEmpresa = () => {
           <div className="pe-block">
             <div className="pe-block__head">
               <h3>Precios</h3>
-              <p>Opcional — ayuda a resolver dudas rápido</p>
             </div>
 
             <div className="pe-row">
@@ -446,7 +444,6 @@ const PerfilEmpresa = () => {
           <div className="pe-block">
             <div className="pe-block__head">
               <h3>Fotos del lugar</h3>
-              <p>Una buena imagen vale más que mil clics</p>
             </div>
 
             {/* Foto principal: si hay en BD o el usuario elige una nueva */}

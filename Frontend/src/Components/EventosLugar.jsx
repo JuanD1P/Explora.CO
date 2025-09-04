@@ -118,7 +118,7 @@ export default function EventosLugar() {
           <span className="pe-logo" aria-hidden>🎉</span>
           <div>
             <h1>Eventos del lugar</h1>
-            <p>Crea y gestiona eventos con el mismo estilo del panel</p>
+            <p>Crea y gestiona eventos de tus lugares</p>
           </div>
         </div>
       </header>
@@ -128,7 +128,6 @@ export default function EventosLugar() {
         <div className="pe-block">
           <div className="pe-block__head">
             <h3>Información del evento</h3>
-            <p>Selecciona el lugar y define los datos básicos</p>
           </div>
 
           <div className="field">
@@ -149,7 +148,7 @@ export default function EventosLugar() {
               type="text"
               value={nombreEvento}
               onChange={(e) => setNombreEvento(e.target.value)}
-              placeholder="Ej: Festival del Café 2025"
+              placeholder="Ej: Festival de música septiembre "
             />
           </div>
 
@@ -159,7 +158,7 @@ export default function EventosLugar() {
               rows={4}
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
-              placeholder="Detalles del evento, invitados, programación, etc."
+              placeholder="Detalles del evento."
             />
           </div>
         </div>
@@ -167,7 +166,6 @@ export default function EventosLugar() {
         <div className="pe-block">
           <div className="pe-block__head">
             <h3>Fotos del evento</h3>
-            <p>La imagen atrae más visitas</p>
           </div>
 
           {/* Foto principal: DROPZONE */}
