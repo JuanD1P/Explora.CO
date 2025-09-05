@@ -182,14 +182,24 @@ router.get('/perfiles', async (req, res) => {
   try {
     const empresaId = req.query.empresa_id ? Number(req.query.empresa_id) : null;
 
+    const dept = typeof req.query.dept === 'string' ? req.query.dept.trim() : null;
+    const muni = typeof req.query.muni === 'string' ? req.query.muni.trim() : null;
+    const ciudadQuery = typeof req.query.ciudad === 'string' ? req.query.ciudad.trim() : null;
+    const ciudad = (dept && muni) ? `${dept}/${muni}` : ciudadQuery;
+
+    const where = [];
+    const params = [];
+
+    if (empresaId) { where.push('p.empresa_id = ?'); params.push(empresaId); }
+    if (ciudad)    { where.push('p.ciudad = ?');     params.push(ciudad); }
+
     const sql = `
       SELECT p.*, u.avatar_url
       FROM perfilempresa p
       LEFT JOIN usuarios u ON u.id = p.empresa_id
-      ${empresaId ? 'WHERE p.empresa_id = ?' : ''}
+      ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
       ORDER BY p.created_at DESC
     `;
-    const params = empresaId ? [empresaId] : [];
     const [perfiles] = await pool.query(sql, params);
 
     const ids = perfiles.map(p => p.id);
@@ -212,6 +222,8 @@ router.get('/perfiles', async (req, res) => {
     res.status(500).json({ error: 'Error listando perfiles' });
   }
 });
+
+
 
 router.get('/perfiles/:id', async (req, res) => {
   try {
@@ -385,5 +397,7 @@ router.delete('/perfiles/:id', async (req, res) => {
     conn.release();
   }
 });
+
+
 
 export const perfilesRouter = router;
