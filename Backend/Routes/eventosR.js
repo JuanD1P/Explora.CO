@@ -7,15 +7,12 @@ import mysql from 'mysql2/promise';
 
 const router = Router();
 
-// __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// uploads
 const uploadsDir = path.resolve(__dirname, '../uploads');
 fs.mkdirSync(uploadsDir, { recursive: true });
 
-// Multer (múltiples fotos)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
@@ -34,7 +31,6 @@ const upload = multer({
   },
 });
 
-// MySQL
 const pool = mysql.createPool({
   host: 'localhost',
   user: 'root',
@@ -44,13 +40,6 @@ const pool = mysql.createPool({
   connectionLimit: 10,
 });
 
-/**
- * POST /api/eventos
- * form-data:
- *  - empresa_id, perfil_id
- *  - nombre_evento, descripcion
- *  - fotos[] (0..10)
- */
 router.post('/eventos', upload.array('fotos', 10), async (req, res) => {
   const conn = await pool.getConnection();
   try {
@@ -62,7 +51,6 @@ router.post('/eventos', upload.array('fotos', 10), async (req, res) => {
     const { nombre_evento, descripcion } = req.body;
     if (!nombre_evento) return res.status(400).json({ error: 'nombre_evento es requerido' });
 
-    // validar que el perfil pertenece a la empresa
     const [pRows] = await conn.query('SELECT id FROM perfilempresa WHERE id=? AND empresa_id=?', [perfil_id, empresa_id]);
     if (!pRows.length) return res.status(403).json({ error: 'El lugar no pertenece a la empresa' });
 
@@ -95,10 +83,6 @@ router.post('/eventos', upload.array('fotos', 10), async (req, res) => {
   }
 });
 
-/**
- * GET /api/eventos
- * Opcional: ?empresa_id= &perfil_id=
- */
 router.get('/eventos', async (req, res) => {
   try {
     const empresaId = req.query.empresa_id ? Number(req.query.empresa_id) : null;
@@ -112,7 +96,6 @@ router.get('/eventos', async (req, res) => {
     const sql = `SELECT * FROM eventos_lugar ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY created_at DESC`;
     const [eventos] = await pool.query(sql, args);
 
-    // fotos
     const ids = eventos.map(e => e.id);
     let fotos = [];
     if (ids.length) {
