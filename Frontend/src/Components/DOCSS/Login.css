@@ -6,7 +6,7 @@
   margin: 0;
   padding: 20px;
   font-family: 'Arial', sans-serif;
-  background: url("../../ImagenesP/ImagenesLogin/FONDO.png") center/cover no-repeat;
+  background: url("../ImagenesP/ImagenesLogin/FONDO.png") center/cover no-repeat;
 }
 
 .login-card {
