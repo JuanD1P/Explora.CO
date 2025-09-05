@@ -436,6 +436,15 @@ const PerfilEmpresa = () => {
       {/* ENCABEZADO */}
       <header className="pe-header glass card-3d">
         <div className="pe-header__left">
+          {/* 🔙 Botón para regresar */}
+          <button
+            type="button"
+            className="btn btn-light"
+            onClick={() => navigate("/InicioEmpresa")}
+            style={{ marginRight: 12 }}
+          >
+            ← Inicio
+          </button>
           <span className="pe-logo" aria-hidden>🏢</span>
           <div>
             <h1>{isEdit ? "Editar lugar" : "Perfil de Lugar"}</h1>

@@ -10,34 +10,18 @@ const slugify = (s) =>
     .replace(/ñ/g, "n")
     .replace(/\s+/g, "-");
 
-const ImgSmart = ({
-  src, alt, className, w = 1200, h = 800,
-  loading = "lazy", fetchpriority, fit = "cover"
-}) => {
-  const imgRef = useRef(null);
-  useEffect(() => {
-    const img = imgRef.current; if (!img) return;
-    let ok = true;
-    img.decode?.().catch(() => {}).finally(() => { if (ok) img.style.opacity = "1"; });
-    return () => { ok = false; };
-  }, []);
-  const onError = (e) => { e.currentTarget.src = imgDemo; e.currentTarget.onerror = null; };
-  return (
-    <img
-      ref={imgRef}
-      src={src}
-      alt={alt}
-      decoding="async"
-      loading={loading}
-      fetchpriority={fetchpriority}
-      width={w}
-      height={h}
-      onError={onError}
-      className={`img-smart ${fit === "contain" ? "fit-contain" : "fit-cover"} ${className || ""}`}
-      style={{ opacity: 0 }}
-    />
-  );
-};
+const ImgSmart = ({ src, alt, className, w=1200, h=800, loading="lazy", fetchPriority, fit="cover" }) => (
+  <img
+    src={src}
+    alt={alt}
+    decoding="async"
+    loading={loading}
+    fetchPriority={fetchPriority}   // ✅ camelCase
+    width={w}
+    height={h}
+    className={`img-smart ${fit === "contain" ? "fit-contain" : "fit-cover"} ${className || ""}`}
+  />
+);
 
 const useScrollButtons = (ref, step = 0.9) => {
   const prev = () => {
