@@ -1,5 +1,3 @@
-/*LOGICA EMPRESAS AVATAR*/
-
 import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
@@ -43,7 +41,6 @@ const pool = mysql.createPool({
   connectionLimit: 10,
 });
 
-// AVATAR EMPRESA
 router.post('/empresa/avatar', upload.single('avatar'), async (req, res) => {
   try {
     const empresa_id = Number(req.body.empresa_id || req.user?.id);
