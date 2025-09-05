@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./DOCSS/PerfilEmpresa.css"; 
 
+
 const API_URL = "http://localhost:3000";
 const EMPRESA_ID = 3;
 
@@ -118,7 +119,7 @@ export default function EventosLugar() {
           <span className="pe-logo" aria-hidden>🎉</span>
           <div>
             <h1>Eventos del lugar</h1>
-            <p>Crea y gestiona eventos con el mismo estilo del panel</p>
+            <p>Crea y gestiona eventos para tus lugares!!</p>
           </div>
         </div>
       </header>

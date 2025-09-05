@@ -158,12 +158,6 @@ const InicioE = () => {
           <span className="emp-logo" aria-hidden>🏢</span>
           <strong>Panel de Empresa</strong>
         </div>
-        <nav className="emp-nav">
-          <Link to="/InicioEmpresa" className="emp-link active">Inicio</Link>
-          <Link to="/empresa/estadisticas" className="emp-link">Estadísticas</Link>
-          <Link to="/ayuda" className="emp-link">Ayuda</Link>
-          <button className="emp-avatar" aria-label="Perfil de empresa">👤</button>
-        </nav>
       </header>
 
       {/* HERO */}
