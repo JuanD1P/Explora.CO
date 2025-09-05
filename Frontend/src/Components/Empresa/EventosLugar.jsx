@@ -3,29 +3,57 @@ ESTA VISTA ES LA ENCARGADA D ECREAR EVENTOS CON
 RESPECTO A UNA PUBLICACION ---------------------*/
 
 import React, { useEffect, useRef, useState } from "react";
-import "../DOCSS/PerfilEmpresa.css"; 
+import { useParams, useNavigate } from "react-router-dom";
+import "../DOCSS/PerfilEmpresa.css";
 
-const API_URL = "http://localhost:3000";
+const API_URL = "http://localhost:3000";  
+const UPLOADS_HOST = import.meta.env?.VITE_UPLOADS_HOST || "http://localhost:3000";
 const EMPRESA_ID = parseInt(localStorage.getItem("user-id"), 10);
 
 const MAX_MB = 10;
-const ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
+const ACCEPTED = ["image/jpeg", "image/png", "image/webp"]; 
 
 export default function EventosLugar() {
+  const { id: routeId } = useParams();  
+  const navigate = useNavigate();
+
+  const [isEdit, setIsEdit] = useState(Boolean(routeId));
+  const [loadingEdit, setLoadingEdit] = useState(Boolean(routeId));
+
   const [lugares, setLugares] = useState([]);
   const [perfilId, setPerfilId] = useState("");
   const [nombreEvento, setNombreEvento] = useState("");
   const [descripcion, setDescripcion] = useState("");
 
+
   const [fotoPrincipal, setFotoPrincipal] = useState(null);
   const [fotoPrincipalPreview, setFotoPrincipalPreview] = useState(null);
   const principalInputRef = useRef(null);
-
   const [fotosExtra, setFotosExtra] = useState([]);
   const addExtraInputRef = useRef(null);
 
   const [enviando, setEnviando] = useState(false);
   const [eventos, setEventos] = useState([]);
+
+
+  const [fotosExistentes, setFotosExistentes] = useState([]); 
+  const [removeIds, setRemoveIds] = useState([]);
+
+  const [imgBust, setImgBust] = useState(0);
+
+  const buildImg = (u, forceFresh = false) => {
+    if (!u) return "";
+    const base = u.startsWith("http") ? u : `${UPLOADS_HOST}${u}`;
+    try {
+      const url = new URL(base);
+      if (forceFresh) url.searchParams.set("v", Date.now().toString());
+      else if (imgBust) url.searchParams.set("v", String(imgBust));
+      return url.toString();
+    } catch {
+      const sep = base.includes("?") ? "&" : "?";
+      return `${base}${forceFresh ? `${sep}v=${Date.now()}` : (imgBust ? `${sep}v=${imgBust}` : "")}`;
+    }
+  };
 
   const fileIsOk = (f) => {
     const okType = ACCEPTED.includes(f.type);
@@ -51,8 +79,44 @@ export default function EventosLugar() {
     setEventos(data || []);
   };
 
-  React.useEffect(() => { cargarLugares(); }, []);
-  React.useEffect(() => { if (perfilId) cargarEventos(perfilId); }, [perfilId]);
+  useEffect(() => { cargarLugares(); }, []);
+  useEffect(() => { if (perfilId) cargarEventos(perfilId); }, [perfilId]);
+
+  useEffect(() => {
+    const fillFrom = async () => {
+      try {
+        const raw = sessionStorage.getItem("evento-edit");
+        if (raw) {
+          const ev = JSON.parse(raw);
+          setIsEdit(true);
+          setLoadingEdit(false);
+          if (ev.perfil_id) setPerfilId(String(ev.perfil_id));
+          setNombreEvento(ev.nombre_evento || ev.titulo || "");
+          setDescripcion(ev.descripcion || "");
+          setFotosExistentes(Array.isArray(ev.fotos) ? ev.fotos : []);
+          setRemoveIds([]);
+          return;
+        }
+        if (routeId) {
+          setIsEdit(true);
+          setLoadingEdit(true);
+          const res = await fetch(`${API_URL}/api/eventos/${routeId}`, { credentials: "include" });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data?.error || "No se pudo cargar el evento");
+          if (data.perfil_id) setPerfilId(String(data.perfil_id));
+          setNombreEvento(data.nombre_evento || data.titulo || "");
+          setDescripcion(data.descripcion || "");
+          setFotosExistentes(Array.isArray(data.fotos) ? data.fotos : []);
+          setRemoveIds([]);
+        }
+      } catch (err) {
+        alert(err.message || "Error cargando evento");
+      } finally {
+        setLoadingEdit(false);
+      }
+    };
+    fillFrom();
+  }, [routeId]);
 
   const onPickPrincipal = (fileOrEvent) => {
     const file = fileOrEvent?.target ? (fileOrEvent.target.files?.[0] || null) : fileOrEvent;
@@ -70,6 +134,15 @@ export default function EventosLugar() {
 
   const removeExtraAt = (i) => setFotosExtra((prev) => prev.filter((_, idx) => idx !== i));
 
+  const toggleRemoveExistente = (fotoId) => {
+    setRemoveIds((prev) => prev.includes(fotoId) ? prev.filter((x) => x !== fotoId) : [...prev, fotoId]);
+  };
+
+  const quitarExistenteDirecto = (fotoId) => {
+    setFotosExistentes((prev) => prev.filter((f) => f.id !== fotoId));
+    setRemoveIds((prev) => (prev.includes(fotoId) ? prev : [...prev, fotoId]));
+  };
+
   const onSubmit = async (e) => {
     e.preventDefault();
     if (!perfilId) return alert("Selecciona un lugar");
@@ -80,26 +153,36 @@ export default function EventosLugar() {
     fd.append("perfil_id", perfilId);
     fd.append("nombre_evento", nombreEvento.trim());
     fd.append("descripcion", descripcion);
+    if (isEdit && removeIds.length) fd.append("remove_foto_ids", JSON.stringify(removeIds));
     if (fotoPrincipal) fd.append("fotos", fotoPrincipal);
     fotosExtra.forEach(({ file }) => fd.append("fotos", file));
 
     try {
       setEnviando(true);
-      const res = await fetch(`${API_URL}/api/eventos`, {
-        method: "POST",
-        body: fd,
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Error creando evento");
+      let res, data;
+      if (isEdit && routeId) {
+        res = await fetch(`${API_URL}/api/eventos/${routeId}`, { method: "PUT", body: fd, credentials: "include" });
+        data = await res.json();
+        if (!res.ok) throw new Error(data?.error || "Error actualizando evento");
+        sessionStorage.removeItem("evento-edit");
+        alert("Cambios guardados");
+      } else {
+        res = await fetch(`${API_URL}/api/eventos`, { method: "POST", body: fd, credentials: "include" });
+        data = await res.json();
+        if (!res.ok) throw new Error(data?.error || "Error creando evento");
+        alert("Evento creado");
+      }
 
       setNombreEvento("");
       setDescripcion("");
       setFotoPrincipal(null);
       setFotoPrincipalPreview(null);
       setFotosExtra([]);
-      await cargarEventos(perfilId);
-      alert("Evento creado");
+      setRemoveIds([]);
+      setFotosExistentes(isEdit ? (data?.evento?.fotos || data?.fotos || []) : []);
+      if (perfilId) await cargarEventos(perfilId);
+
+      setImgBust(Date.now());
     } catch (err) {
       alert(err.message);
     } finally {
@@ -107,34 +190,44 @@ export default function EventosLugar() {
     }
   };
 
+  if (loadingEdit) {
+    return (
+      <main className="pe-root">
+        <header className="pe-header glass card-3d" style={{ maxWidth: 1000 }}>
+          <div className="pe-header__left">
+            <span className="pe-logo" aria-hidden>🎉</span>
+            <div>
+              <h1>Editando evento…</h1>
+              <p>Cargando datos</p>
+            </div>
+          </div>
+        </header>
+      </main>
+    );
+  }
+
   return (
     <main className="pe-root">
-      {/* HEADER */}
       <header className="pe-header glass card-3d" style={{ maxWidth: 1000 }}>
         <div className="pe-header__left">
           <span className="pe-logo" aria-hidden>🎉</span>
           <div>
-            <h1>Eventos del lugar</h1>
-            <p>Crea y gestiona eventos de tus lugares</p>
+            <h1>{isEdit ? `Editar evento #${routeId}` : "Eventos del lugar"}</h1>
+            <p>{isEdit ? "Modifica y guarda tus cambios" : "Crea y gestiona eventos de tus lugares"}</p>
           </div>
         </div>
       </header>
 
-      {/* FORM */}
       <form onSubmit={onSubmit} className="pe-form card-3d" style={{ maxWidth: 1000, gridTemplateColumns: "1fr" }}>
         <div className="pe-block">
-          <div className="pe-block__head">
-            <h3>Información del evento</h3>
-          </div>
+          <div className="pe-block__head"><h3>Información del evento</h3></div>
 
           <div className="field">
             <label>Lugar *</label>
             <select value={perfilId} onChange={(e) => setPerfilId(e.target.value)}>
               {lugares.length === 0 && <option value="">No tienes lugares. Crea uno primero.</option>}
               {lugares.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.nombre_lugar} — {l.ciudad}
-                </option>
+                <option key={l.id} value={l.id}>{l.nombre_lugar} — {l.ciudad}</option>
               ))}
             </select>
           </div>
@@ -145,84 +238,70 @@ export default function EventosLugar() {
               type="text"
               value={nombreEvento}
               onChange={(e) => setNombreEvento(e.target.value)}
-              placeholder="Ej: Festival de música septiembre "
+              placeholder="Ej: Festival de música septiembre"
             />
           </div>
 
           <div className="field">
             <label>Descripción</label>
-            <textarea
-              rows={4}
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
-              placeholder="Detalles del evento."
-            />
+            <textarea rows={4} value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder="Detalles del evento." />
           </div>
         </div>
 
         <div className="pe-block">
-          <div className="pe-block__head">
-            <h3>Fotos del evento</h3>
-          </div>
+          <div className="pe-block__head"><h3>Fotos del evento</h3></div>
+
+          {isEdit && fotosExistentes.length > 0 && (
+            <div className="field">
+              <label>Fotos existentes</label>
+              <div className="pe-gallery">
+                {fotosExistentes.map((f) => (
+                  <div key={f.id} className={`pe-thumb ${removeIds.includes(f.id) ? "pe-thumb--to-remove" : ""}`}>
+                    <img
+                      src={buildImg(f.imagen_url)}
+                      alt={`foto-${f.id}`}
+                      onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = buildImg(f.imagen_url, true); }}
+                    />
+                    <div className="pe-thumb__bar">
+                      <button type="button" className="pe-thumb__remove" title="Quitar ahora" onClick={() => quitarExistenteDirecto(f.id)}>×</button>
+                      <label className="pe-thumb__check">
+                        <input type="checkbox" checked={removeIds.includes(f.id)} onChange={() => toggleRemoveExistente(f.id)} />
+                        Borrar al guardar
+                      </label>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <small className="pe-hint">Las marcadas se eliminarán cuando guardes los cambios.</small>
+            </div>
+          )}
 
           <div className="field">
-            <label>Foto principal</label>
-
+            <label>Foto principal {isEdit ? "(opcional)" : ""}</label>
             {!fotoPrincipalPreview ? (
               <div
                 className="pe-dropzone"
                 onClick={() => principalInputRef.current?.click()}
                 onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  const f = e.dataTransfer.files?.[0];
-                  if (f) onPickPrincipal(f);
-                }}
-                role="button"
-                tabIndex={0}
+                onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) onPickPrincipal(f); }}
+                role="button" tabIndex={0}
                 onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && principalInputRef.current?.click()}
               >
                 <div className="pe-dropzone__icon">📷</div>
                 <div className="pe-dropzone__text">
-                  <strong>Arrastra una imagen aquí</strong>
-                  <span>o</span>
+                  <strong>Arrastra una imagen aquí</strong><span>o</span>
                   <button type="button" className="btn btn-outline">Selecciona una imagen</button>
                 </div>
                 <small className="pe-hint">JPG/PNG/WEBP • máx. {MAX_MB}MB</small>
-
-                <input
-                  ref={principalInputRef}
-                  type="file"
-                  accept={ACCEPTED.join(",")}
-                  onChange={onPickPrincipal}
-                  hidden
-                />
+                <input ref={principalInputRef} type="file" accept={ACCEPTED.join(",")} onChange={onPickPrincipal} hidden />
               </div>
             ) : (
               <div className="pe-photo-main">
                 <img src={fotoPrincipalPreview} alt="principal" />
                 <div className="pe-photo-actions">
-                  <button type="button" className="btn btn-outline" onClick={() => principalInputRef.current?.click()}>
-                    Cambiar
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-danger"
-                    onClick={() => {
-                      setFotoPrincipal(null);
-                      setFotoPrincipalPreview(null);
-                    }}
-                  >
-                    Quitar
-                  </button>
-
-                  <input
-                    ref={principalInputRef}
-                    type="file"
-                    accept={ACCEPTED.join(",")}
-                    onChange={onPickPrincipal}
-                    hidden
-                  />
+                  <button type="button" className="btn btn-outline" onClick={() => principalInputRef.current?.click()}>Cambiar</button>
+                  <button type="button" className="btn btn-danger" onClick={() => { setFotoPrincipal(null); setFotoPrincipalPreview(null); }}>Quitar</button>
+                  <input ref={principalInputRef} type="file" accept={ACCEPTED.join(",")} onChange={onPickPrincipal} hidden />
                 </div>
               </div>
             )}
@@ -230,48 +309,34 @@ export default function EventosLugar() {
 
           <div className="field">
             <label>Más fotos (opcional)</label>
-
             <div className="pe-gallery">
               {fotosExtra.map((f, i) => (
                 <div key={i} className="pe-thumb">
                   <img src={f.preview} alt={`extra-${i}`} />
-                  <button
-                    type="button"
-                    className="pe-thumb__remove"
-                    title="Quitar"
-                    onClick={() => removeExtraAt(i)}
-                  >
-                    ×
-                  </button>
+                  <button type="button" className="pe-thumb__remove" title="Quitar" onClick={() => removeExtraAt(i)}>×</button>
                 </div>
               ))}
             </div>
 
-            <div
-              className="file-btn"
-              onClick={() => addExtraInputRef.current?.click()}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && addExtraInputRef.current?.click()}
-            >
+            <div className="file-btn" onClick={() => addExtraInputRef.current?.click()} role="button" tabIndex={0}
+                 onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && addExtraInputRef.current?.click()}>
               <span className="file-btn__icon">➕</span>
               <span className="file-btn__label">Agregar otra foto</span>
             </div>
 
-            <input
-              ref={addExtraInputRef}
-              type="file"
-              accept={ACCEPTED.join(",")}
-              onChange={onAddExtraFromHidden}
-              hidden
-            />
+            <input ref={addExtraInputRef} type="file" accept={ACCEPTED.join(",")} onChange={onAddExtraFromHidden} hidden />
           </div>
         </div>
 
-        <div className="pe-actions">
+        <div className="pe-actions" style={{ gap: 8 }}>
           <button type="submit" className="btn btn-primary btn-lg" disabled={enviando}>
-            {enviando ? "Guardando..." : "Crear evento"}
+            {enviando ? "Guardando..." : isEdit ? "Guardar cambios" : "Crear evento"}
           </button>
+          {isEdit && (
+            <button type="button" className="btn btn-outline" onClick={() => { sessionStorage.removeItem("evento-edit"); navigate("/EventosLugar"); }}>
+              Cancelar edición
+            </button>
+          )}
         </div>
       </form>
 
@@ -281,8 +346,7 @@ export default function EventosLugar() {
           <ul className="pe-list__ul">
             {eventos.map((ev) => (
               <li key={ev.id}>
-                <strong>{ev.nombre_evento}</strong>
-                <span>#{ev.id}</span>
+                <strong>{ev.nombre_evento}</strong><span>#{ev.id}</span>
               </li>
             ))}
           </ul>
