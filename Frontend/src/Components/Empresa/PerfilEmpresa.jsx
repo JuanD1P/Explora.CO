@@ -1,6 +1,4 @@
-/*----------------CREACION DE PUBLICACIONES------------
-FORMULARUO PARA LA CREACION DE LAS PUBLICACIONES NUEVAS*/
-
+/*---------------- CREACIÓN DE PUBLICACIONES ----------------*/
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import "../DOCSS/PerfilEmpresa.css";
@@ -9,7 +7,9 @@ import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from "re
 import L from "leaflet";
 
 const API_URL = "http://localhost:3000";
-const UPLOADS_HOST = "http://localhost:3000"; 
+const UPLOADS_HOST = "http://localhost:3000";
+const COL_JSON =
+  "https://raw.githubusercontent.com/marcovega/colombia-json/master/colombia.min.json";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -20,7 +20,9 @@ L.Icon.Default.mergeOptions({
 
 function RecenterMap({ center }) {
   const map = useMap();
-  useEffect(() => { map.flyTo(center, map.getZoom(), { animate: true }); }, [center, map]);
+  useEffect(() => {
+    map.flyTo(center, map.getZoom(), { animate: true });
+  }, [center, map]);
   return null;
 }
 
@@ -34,36 +36,64 @@ const CATEGORIAS = [
 ];
 
 const EMPRESA_ID = parseInt(localStorage.getItem("user-id"), 10);
-
-
 const MAX_MB = 10;
 const ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
 
+// Bounding box Colombia [minLon, minLat, maxLon, maxLat]
+const CO_BBOX = [-79.02, -4.24, -66.85, 13.52];
+const withinColombia = (lat, lng) =>
+  lng >= CO_BBOX[0] && lng <= CO_BBOX[2] && lat >= CO_BBOX[1] && lat <= CO_BBOX[3];
+
+const slugify2 = (s) =>
+  s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ñ/g, "n")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+
+const RAPID_HOURS = [
+  { k: "none", label: "— Elegir manual —", desde: "", hasta: "" },
+  { k: "8-17", label: "Lunes a Domingo · 8:00–17:00", desde: "08:00", hasta: "17:00" },
+  { k: "9-18", label: "Lunes a Domingo · 9:00–18:00", desde: "09:00", hasta: "18:00" },
+  { k: "10-19", label: "Lunes a Domingo · 10:00–19:00", desde: "10:00", hasta: "19:00" },
+];
+
 const PerfilEmpresa = () => {
   const navigate = useNavigate();
-  const { id } = useParams();         
+  const { id } = useParams();
   const isEdit = Boolean(id);
 
   // ------ Form datos del lugar ------
   const [nombreLugar, setNombreLugar] = useState("");
   const [categoria, setCategoria] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [ciudad, setCiudad] = useState("");
+  const [ciudad, setCiudad] = useState(""); // se guarda como dep/mun
   const [direccion, setDireccion] = useState("");
+
+  // Departamento/Municipio
+  const [departamento, setDepartamento] = useState("");
+  const [municipio, setMunicipio] = useState("");
+  const [deptos, setDeptos] = useState([]);
+  const [munis, setMunis] = useState([]);
 
   // Horarios / precios
   const [horarioDesde, setHorarioDesde] = useState("");
   const [horarioHasta, setHorarioHasta] = useState("");
+  const [horarioPreset, setHorarioPreset] = useState("none");
   const [moneda, setMoneda] = useState("COP");
   const [precioDesde, setPrecioDesde] = useState("");
   const [precioHasta, setPrecioHasta] = useState("");
   const [infoPrecios, setInfoPrecios] = useState("");
 
-  // Fotos del lugar
-  const [fotoPrincipal, setFotoPrincipal] = useState(null);         
+  // Fotos
+  const [fotoPrincipal, setFotoPrincipal] = useState(null);
   const [fotoPrincipalPreview, setFotoPrincipalPreview] = useState(null);
-  const [fotosExtra, setFotosExtra] = useState([]);                  
-  const [fotosExistentes, setFotosExistentes] = useState([]);       
+  const [fotosExtra, setFotosExtra] = useState([]);
+  const [fotosExistentes, setFotosExistentes] = useState([]);
   const addExtraInputRef = useRef(null);
   const principalInputRef = useRef(null);
 
@@ -92,7 +122,7 @@ const PerfilEmpresa = () => {
     return okType && okSize;
   };
 
-  // ------- Avatar  -------
+  // ------- Avatar -------
   const onPickAvatar = (e) => {
     const f = e.target.files?.[0] || null;
     if (!f || !fileIsOk(f)) return;
@@ -108,7 +138,11 @@ const PerfilEmpresa = () => {
     fd.append("avatar", avatarFile);
     try {
       setSubiendoAvatar(true);
-      const res = await fetch(`${API_URL}/api/empresa/avatar`, { method: "POST", body: fd, credentials: "include" });
+      const res = await fetch(`${API_URL}/api/empresa/avatar`, {
+        method: "POST",
+        body: fd,
+        credentials: "include",
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Error al subir avatar");
       alert("Foto de perfil actualizada");
@@ -119,7 +153,7 @@ const PerfilEmpresa = () => {
     }
   };
 
-  // ------- Fotos del lugar (principal + extras) -------
+  // ------- Fotos -------
   const onPickPrincipal = (file) => {
     if (!file || !fileIsOk(file)) return;
     setFotoPrincipal(file);
@@ -136,61 +170,123 @@ const PerfilEmpresa = () => {
   const removeExtraAt = (idx) => setFotosExtra((prev) => prev.filter((_, i) => i !== idx));
 
   // ====== geolocalización / mapa ======
+  const NOMI_SEARCH = "https://nominatim.openstreetmap.org/search";
+  const NOMI_REVERSE = "https://nominatim.openstreetmap.org/reverse";
+
+  // Sugerencias restringidas a Colombia
   const searchAddress = async (text) => {
     try {
-      if (!text || text.trim().length < 3) { setSuggestions([]); return; }
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(text)}&addressdetails=1&limit=6`;
+      if (!text || text.trim().length < 3) {
+        setSuggestions([]);
+        return;
+      }
+      const url = `${NOMI_SEARCH}?format=json&q=${encodeURIComponent(
+        text
+      )}&addressdetails=1&limit=6&countrycodes=co&viewbox=${CO_BBOX[0]},${CO_BBOX[3]},${CO_BBOX[2]},${CO_BBOX[1]}&bounded=1`;
       const res = await fetch(url);
       const data = await res.json();
-      setSuggestions(data.map((d) => ({
-        lat: parseFloat(d.lat),
-        lng: parseFloat(d.lon),
-        display: d.display_name,
-        city: d.address?.city || d.address?.town || d.address?.village || "",
-      })));
-    } catch { setSuggestions([]); }
+      setSuggestions(
+        data.map((d) => ({
+          lat: parseFloat(d.lat),
+          lng: parseFloat(d.lon),
+          display: d.display_name,
+          city: d.address?.city || d.address?.town || d.address?.village || "",
+        }))
+      );
+    } catch {
+      setSuggestions([]);
+    }
   };
 
   const handlePickSuggestion = (s) => {
+    if (!withinColombia(s.lat, s.lng)) {
+      alert("Solo direcciones dentro de Colombia.");
+      return;
+    }
     setLoc({ lat: s.lat, lng: s.lng, address: s.display, chosen: true });
     setDireccion(s.display);
-    if (s.city && !ciudad) setCiudad(s.city);
+    if (s.city && !municipio) setMunicipio(s.city);
     setQuery(s.display);
     setSuggestions([]);
   };
 
+  async function geocodeMunicipio(dep, mun) {
+    const q = `${mun}, ${dep}, Colombia`;
+    const url = `${NOMI_SEARCH}?format=json&q=${encodeURIComponent(
+      q
+    )}&addressdetails=1&limit=1&countrycodes=co&viewbox=${CO_BBOX[0]},${CO_BBOX[3]},${CO_BBOX[2]},${CO_BBOX[1]}&bounded=1`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const hit = data?.[0];
+    if (!hit) return null;
+    const lat = parseFloat(hit.lat),
+      lng = parseFloat(hit.lon);
+    if (!withinColombia(lat, lng)) return null;
+    return { lat, lng, display: hit.display_name, address: hit.address };
+  }
+
+  async function centerOnMunicipio(dep, mun) {
+    const hit = await geocodeMunicipio(dep, mun);
+    if (!hit) {
+      alert("No se pudo ubicar el municipio en Colombia.");
+      return;
+    }
+    setLoc({ lat: hit.lat, lng: hit.lng, address: hit.display, chosen: true });
+    setDireccion(hit.display);
+    setQuery(hit.display);
+  }
+
   const reverseGeocode = async (lat, lng) => {
     try {
-      const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+      if (!withinColombia(lat, lng)) {
+        alert("Solo se permiten ubicaciones dentro de Colombia.");
+        return;
+      }
+      const url = `${NOMI_REVERSE}?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
       const res = await fetch(url);
       const data = await res.json();
       const display = data?.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
       setLoc({ lat, lng, address: display, chosen: true });
       setDireccion(display);
       const city = data?.address?.city || data?.address?.town || data?.address?.village || "";
-      if (city) setCiudad(city);
+      if (city) setMunicipio(city);
       setQuery(display);
     } catch {
       setLoc({ lat, lng, address: `${lat.toFixed(5)}, ${lng.toFixed(5)}`, chosen: true });
     }
   };
 
-  const getMyLocation = () => {
-    if (!("geolocation" in navigator)) { setGeoStatus("error"); setGeoErr("Este navegador no soporta geolocalización."); return; }
-    setGeoStatus("prompt"); setGeoErr("");
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => { setGeoStatus("granted"); await reverseGeocode(pos.coords.latitude, pos.coords.longitude); },
-      (err) => { setGeoStatus(err.code === 1 ? "denied" : "error"); setGeoErr(err.code === 1 ? "Permiso de ubicación denegado" : "No fue posible obtener la ubicación."); },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-    );
-  };
-
   const ClickToSetMarker = () => {
-    useMapEvents({ click(e) { reverseGeocode(e.latlng.lat, e.latlng.lng); } });
+    useMapEvents({
+      click(e) {
+        reverseGeocode(e.latlng.lat, e.latlng.lng);
+      },
+    });
     return null;
   };
 
-  /* ==================== CARGAR DATOS EN MODO EDICIÓN ==================== */
+  // ==================== Cargar JSON Colombia ====================
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(COL_JSON);
+        const data = await res.json();
+        const shape = data.map((d) => ({
+          nombre: d.departamento,
+          slug: slugify2(d.departamento),
+          municipios: (d.ciudades || []).map((c) => ({
+            nombre: c,
+            slug: slugify2(c),
+          })),
+        }));
+        setDeptos(shape.sort((a, b) => a.nombre.localeCompare(b.nombre, "es")));
+      } catch {
+        setDeptos([]);
+      }
+    })();
+  }, []);
+
+  // ==================== Cargar datos en edición ====================
   useEffect(() => {
     if (!isEdit) return;
     (async () => {
@@ -202,7 +298,6 @@ const PerfilEmpresa = () => {
         setNombreLugar(data.nombre_lugar || "");
         setCategoria(data.categoria || "");
         setDescripcion(data.descripcion || "");
-        setCiudad(data.ciudad || "");
         setDireccion(data.direccion || "");
         setQuery(data.direccion || "");
         setLoc({
@@ -211,8 +306,19 @@ const PerfilEmpresa = () => {
           address: data.direccion || "",
           chosen: true,
         });
-        setHorarioDesde(data.horario_desde ? String(data.horario_desde).slice(0,5) : "");
-        setHorarioHasta(data.horario_hasta ? String(data.horario_hasta).slice(0,5) : "");
+
+        const ciudadStr = data.ciudad || "";
+        setCiudad(ciudadStr);
+        const parts = ciudadStr.split("/");
+        if (parts.length === 2) {
+          setDepartamento(parts[0]);
+          setMunicipio(parts[1]);
+          const depObj = deptos.find((d) => d.nombre === parts[0]);
+          if (depObj) setMunis(depObj.municipios);
+        }
+
+        setHorarioDesde(data.horario_desde ? String(data.horario_desde).slice(0, 5) : "");
+        setHorarioHasta(data.horario_hasta ? String(data.horario_hasta).slice(0, 5) : "");
         setMoneda(data.moneda || "COP");
         setPrecioDesde(data.precio_desde ?? "");
         setPrecioHasta(data.precio_hasta ?? "");
@@ -228,15 +334,52 @@ const PerfilEmpresa = () => {
         alert(e.message);
       }
     })();
-  }, [isEdit, id]);
+  }, [isEdit, id, deptos]);
 
-  // ------- Enviar  -------
+  // ====== Ubicación actual ======
+  const getMyLocation = () => {
+    if (!("geolocation" in navigator)) {
+      setGeoStatus("error");
+      setGeoErr("Este navegador no soporta geolocalización.");
+      return;
+    }
+    setGeoStatus("prompt");
+    setGeoErr("");
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        setGeoStatus("granted");
+        await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+      },
+      (err) => {
+        setGeoStatus(err.code === 1 ? "denied" : "error");
+        setGeoErr(
+          err.code === 1 ? "Permiso de ubicación denegado" : "No fue posible obtener la ubicación."
+        );
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  };
+
+  // Presets de horario
+  useEffect(() => {
+    const preset = RAPID_HOURS.find((p) => p.k === horarioPreset);
+    if (!preset || preset.k === "none") return;
+    setHorarioDesde(preset.desde);
+    setHorarioHasta(preset.hasta);
+  }, [horarioPreset]);
+
+  // ------- Enviar -------
   const onSubmit = async (e) => {
     e.preventDefault();
-
-    if (!nombreLugar || !categoria || !ciudad || !direccion || !loc.lat || !loc.lng) {
-      alert("Completa los campos obligatorios"); return;
+    if (!nombreLugar || !categoria || !departamento || !municipio || !direccion) {
+      alert("Completa los campos obligatorios");
+      return;
     }
+    if (!withinColombia(loc.lat, loc.lng)) {
+      alert("Selecciona una ubicación válida dentro de Colombia.");
+      return;
+    }
+
     if ((horarioDesde && !horarioHasta) || (!horarioDesde && horarioHasta)) {
       return alert("Si defines horario, completa ambos: desde y hasta.");
     }
@@ -246,15 +389,19 @@ const PerfilEmpresa = () => {
 
     const pDesde = precioDesde ? parseFloat(precioDesde) : null;
     const pHasta = precioHasta ? parseFloat(precioHasta) : null;
-    if ((pDesde !== null && pDesde < 0) || (pHasta !== null && pHasta < 0)) return alert("Los precios no pueden ser negativos.");
-    if (pDesde !== null && pHasta !== null && pDesde > pHasta) return alert('"Precio desde" no puede ser mayor a "precio hasta".');
+    if ((pDesde !== null && pDesde < 0) || (pHasta !== null && pHasta < 0))
+      return alert("Los precios no pueden ser negativos.");
+    if (pDesde !== null && pHasta !== null && pDesde > pHasta)
+      return alert('"Precio desde" no puede ser mayor a "precio hasta".');
+
+    const ciudadCompuesta = `${departamento}/${municipio}`;
 
     const formData = new FormData();
     formData.append("empresa_id", String(EMPRESA_ID));
     formData.append("nombre_lugar", nombreLugar);
     formData.append("categoria", categoria);
     formData.append("descripcion", descripcion);
-    formData.append("ciudad", ciudad);
+    formData.append("ciudad", ciudadCompuesta);
     formData.append("direccion", direccion);
     formData.append("lat", String(loc.lat));
     formData.append("lng", String(loc.lng));
@@ -265,7 +412,6 @@ const PerfilEmpresa = () => {
     formData.append("precio_hasta", precioHasta || "");
     formData.append("info_precios", infoPrecios || "");
 
-    // nuevas fotos
     if (fotoPrincipal) formData.append("fotos", fotoPrincipal);
     fotosExtra.forEach(({ file }) => formData.append("fotos", file));
 
@@ -275,9 +421,8 @@ const PerfilEmpresa = () => {
       const method = isEdit ? "PUT" : "POST";
       const res = await fetch(url, { method, body: formData, credentials: "include" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || (isEdit ? "No se pudo actualizar" : "Error al crear el perfil"));
-
-      // volver al panel
+      if (!res.ok)
+        throw new Error(data?.error || (isEdit ? "No se pudo actualizar" : "Error al crear"));
       navigate("/InicioEmpresa");
     } catch (err) {
       alert(err.message);
@@ -302,9 +447,7 @@ const PerfilEmpresa = () => {
             <div className="pe-avatar">{avatarPreview ? <img src={avatarPreview} alt="avatar" /> : <span>📷</span>}</div>
             <input ref={avatarInputRef} type="file" accept="image/*" onChange={onPickAvatar} hidden />
             <div className="pe-avatar-actions">
-              <button type="button" className="btn btn-outline" onClick={() => avatarInputRef.current?.click()}>
-                Seleccionar
-              </button>
+              <button type="button" className="btn btn-outline" onClick={() => avatarInputRef.current?.click()}>Seleccionar</button>
               <button type="submit" className="btn btn-dark" disabled={subiendoAvatar || !avatarFile}>
                 {subiendoAvatar ? "Subiendo..." : "Guardar foto"}
               </button>
@@ -342,9 +485,38 @@ const PerfilEmpresa = () => {
                 <textarea rows={3} value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder="Cuenta por qué es especial, qué incluye, tips, etc." />
               </div>
 
+              {/* Departamento / Municipio */}
               <div className="field">
-                <label>Ciudad *</label>
-                <input type="text" value={ciudad} onChange={(e) => setCiudad(e.target.value)} placeholder="Ej: Salento" />
+                <label>Departamento *</label>
+                <select
+                  value={departamento}
+                  onChange={(e) => {
+                    const dep = e.target.value;
+                    setDepartamento(dep);
+                    const found = deptos.find((d) => d.nombre === dep);
+                    setMunis(found ? found.municipios : []);
+                    setMunicipio("");
+                  }}
+                >
+                  <option value="">Selecciona departamento</option>
+                  {deptos.map((d) => <option key={d.slug} value={d.nombre}>{d.nombre}</option>)}
+                </select>
+              </div>
+
+              <div className="field">
+                <label>Municipio *</label>
+                <select
+                  value={municipio}
+                  onChange={async (e) => {
+                    const m = e.target.value;
+                    setMunicipio(m);
+                    if (departamento && m) await centerOnMunicipio(departamento, m);
+                  }}
+                  disabled={!departamento}
+                >
+                  <option value="">Selecciona municipio</option>
+                  {munis.map((m) => <option key={m.slug} value={m.nombre}>{m.nombre}</option>)}
+                </select>
               </div>
 
               <div className="field field-colspan">
@@ -395,16 +567,25 @@ const PerfilEmpresa = () => {
           <div className="pe-block">
             <div className="pe-block__head">
               <h3>Horarios</h3>
+              <p>Elige un preset o define manualmente</p>
             </div>
 
             <div className="pe-row">
               <div className="field">
+                <label>Horario rápido</label>
+                <select value={horarioPreset} onChange={(e) => setHorarioPreset(e.target.value)}>
+                  {RAPID_HOURS.map((h) => (
+                    <option key={h.k} value={h.k}>{h.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="field">
                 <label>Desde</label>
-                <input type="time" value={horarioDesde} onChange={(e) => setHorarioDesde(e.target.value)} />
+                <input type="time" value={horarioDesde} onChange={(e) => { setHorarioDesde(e.target.value); setHorarioPreset("none"); }} />
               </div>
               <div className="field">
                 <label>Hasta</label>
-                <input type="time" value={horarioHasta} onChange={(e) => setHorarioHasta(e.target.value)} />
+                <input type="time" value={horarioHasta} onChange={(e) => { setHorarioHasta(e.target.value); setHorarioPreset("none"); }} />
               </div>
             </div>
           </div>
