@@ -9,6 +9,7 @@ import './Index.css';
 /* Importaciones de Componentes Para el usuario normal */
 import Inicio from './Components/Usuarios/Inicio';
 import Departamentos from './Components/Usuarios/Departamentos.jsx';
+import Municipios from './Components/Usuarios/Municipios.jsx';
 
 /* Importaciones de Componentes Para los administradores */
 import Admin from './Components/Administrador/Admin';
@@ -27,6 +28,7 @@ import NotFound from './Components/Publica/NotFound';
 import ProtectedRoute from './Components/Publica/PrivateRoute';
 import Navbar from './Components/Publica/Navbar';
 import Footer from './Components/Publica/Footer';
+
 
 
 function App() {
@@ -105,6 +107,15 @@ function App() {
                 <Inicio />
               </ProtectedRoute>
             }
+          />
+
+          <Route
+            path="/departamentos/:deptSlug/:muniSlug"
+            element={
+            <ProtectedRoute allowedRoles={['USER']}>
+            <Municipios />
+            </ProtectedRoute>
+           }
           />
           
           <Route

@@ -350,7 +350,7 @@ const icons = {
               <p>
                 {depInfo.extract
                   ? depInfo.extract
-                  : "Reemplaza este texto con datos reales: población, clima, principales atractivos, altitud, gentilicio, etc."}
+                  : "CARGANDO DATOS..."}
               </p>
 
               <ul className="info-stats" role="list">
