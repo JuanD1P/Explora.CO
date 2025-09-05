@@ -10,6 +10,7 @@ import './Index.css';
 import Inicio from './Components/Usuarios/Inicio';
 import Departamentos from './Components/Usuarios/Departamentos.jsx';
 import Municipios from './Components/Usuarios/Municipios.jsx';
+import PublicacionDetalle from './Components/Usuarios/PublicacionDetalle.jsx';
 
 /* Importaciones de Componentes Para los administradores */
 import Admin from './Components/Administrador/Admin';
@@ -116,6 +117,15 @@ function App() {
                 <Inicio />
               </ProtectedRoute>
             }
+          />
+
+          <Route
+            path="/publicacion/:id"
+            element={
+            <ProtectedRoute allowedRoles={['USER']}>
+            <PublicacionDetalle />
+            </ProtectedRoute>
+           }
           />
 
           <Route

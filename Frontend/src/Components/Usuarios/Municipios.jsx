@@ -508,12 +508,13 @@ export default function Municipio() {
                           ? new Date(p.updated_at).toLocaleDateString("es-CO")
                           : "—"}
                       </span>
-                      <button
-                        className="btn-primary"
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        Ver detalle
-                      </button>
+
+                      
+                        <Link className="btn-primary" to={`/publicacion/${p.id}`}>
+                          Ver detalle
+                        </Link>
+                      
+                       
                     </div>
                   </div>
                 </li>
