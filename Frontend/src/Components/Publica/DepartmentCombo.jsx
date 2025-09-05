@@ -1,6 +1,4 @@
-/*COMBO PARA LA BUSQUEDA DE LA NAVBAR 
-DEPARTAMENTOS Y PERFIL */
-
+/* ./components/DepartmentCombo.jsx */
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 export default function DepartmentCombo({
@@ -9,7 +7,8 @@ export default function DepartmentCombo({
   onChange,
   onEnter,
   placeholder = "Departamento",
-  storageKey = "explora_recent_departments"
+  storageKey = "explora_recent_departments",
+  id = "deptoCombo"
 }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState(value || "");
@@ -17,9 +16,10 @@ export default function DepartmentCombo({
   const [recents, setRecents] = useState([]);
   const wrapRef = useRef(null);
   const inputRef = useRef(null);
-  const listRef = useRef(null);
+  const recentsRef = useRef(null);
+  const resultsRef = useRef(null);
 
-
+  // Cargar recientes
   useEffect(() => {
     try {
       const raw = localStorage.getItem(storageKey);
@@ -34,8 +34,9 @@ export default function DepartmentCombo({
   }, [q, items]);
 
   const hasRecents = recents && recents.length > 0 && !q.trim();
+  const pool = hasRecents ? [...recents, ...filtered] : filtered;
 
-
+  // Cerrar por click afuera y escape global
   useEffect(() => {
     const onClick = (e) => {
       if (!wrapRef.current?.contains(e.target)) setOpen(false);
@@ -49,7 +50,7 @@ export default function DepartmentCombo({
     };
   }, []);
 
-
+  // Atajo Ctrl/Cmd+K
   useEffect(() => {
     const onKey = (e) => {
       const isMac = navigator.platform.toUpperCase().includes("MAC");
@@ -57,17 +58,12 @@ export default function DepartmentCombo({
           (!isMac && e.ctrlKey && e.key.toLowerCase() === "k")) {
         e.preventDefault();
         setOpen(true);
-        inputRef.current?.focus();
+        inputRef.current?.focus({ preventScroll: true });
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
-
-  const scrollIntoView = (idx) => {
-    const el = listRef.current?.children[idx];
-    el?.scrollIntoView({ block: "nearest" });
-  };
 
   const choose = (item) => {
     if (!item) return;
@@ -77,10 +73,33 @@ export default function DepartmentCombo({
     onEnter?.(item);
 
     try {
-      const next = [item, ...(recents || [])].filter((x, i, arr) => arr.indexOf(x) === i).slice(0, 6);
+      const next = [item, ...(recents || [])]
+        .filter((x, i, arr) => arr.indexOf(x) === i)
+        .slice(0, 6);
       setRecents(next);
       localStorage.setItem(storageKey, JSON.stringify(next));
     } catch {}
+  };
+
+  const clearInput = () => {
+    setQ("");
+    onChange?.("");
+    setActive(0);
+    setOpen(true);
+    inputRef.current?.focus({ preventScroll: true });
+  };
+
+  const clearRecents = () => {
+    setRecents([]);
+    try { localStorage.removeItem(storageKey); } catch {}
+  };
+
+  const scrollIntoView = (idx) => {
+    const inRecents = hasRecents && idx < recents.length;
+    const container = inRecents ? recentsRef.current : resultsRef.current;
+    const childIdx = inRecents ? idx : (hasRecents ? idx - recents.length : idx);
+    const el = container?.children?.[childIdx];
+    el?.scrollIntoView({ block: "nearest" });
   };
 
   const onKeyDown = (e) => {
@@ -92,37 +111,62 @@ export default function DepartmentCombo({
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActive((i) => Math.min(i + 1, (hasRecents ? recents.length : 0) + filtered.length - 1));
-      scrollIntoView(active + 1);
+      setActive(i => {
+        const next = Math.min(i + 1, pool.length - 1);
+        requestAnimationFrame(() => scrollIntoView(next));
+        return next;
+      });
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setActive((i) => Math.max(i - 1, 0));
-      scrollIntoView(active - 1);
+      setActive(i => {
+        const next = Math.max(i - 1, 0);
+        requestAnimationFrame(() => scrollIntoView(next));
+        return next;
+      });
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      setActive(0);
+      requestAnimationFrame(() => scrollIntoView(0));
+    } else if (e.key === "End") {
+      e.preventDefault();
+      const last = pool.length - 1;
+      setActive(last);
+      requestAnimationFrame(() => scrollIntoView(last));
     } else if (e.key === "Enter") {
       e.preventDefault();
-      const pool = hasRecents ? [...recents, ...filtered] : filtered;
-      const pick = pool[active] || q;
-      choose(pick);
+      choose(pool[active] || q);
     } else if (e.key === "Tab") {
+      setOpen(false);
+    } else if (e.key === "Escape") {
       setOpen(false);
     }
   };
 
-  const clearInput = () => {
-    setQ("");
-    onChange?.("");
-    setActive(0);
-    inputRef.current?.focus();
-    setOpen(true);
+  const comboId = `${id}-listbox`;
+  const activeId = pool[active] ? `${id}-opt-${active}` : undefined;
+
+  // Resalta coincidencias
+  const renderLabel = (item) => {
+    const s = q.trim();
+    if (!s) return item;
+    const i = item.toLowerCase().indexOf(s.toLowerCase());
+    if (i < 0) return item;
+    return (
+      <>
+        {item.slice(0, i)}
+        <mark className="combo__mark">{item.slice(i, i + s.length)}</mark>
+        {item.slice(i + s.length)}
+      </>
+    );
   };
 
   return (
     <div className="combo" ref={wrapRef}>
-      <label className="sr-only" htmlFor="deptoInput">Departamento</label>
+      <label className="sr-only" htmlFor={`${id}-input`}>Departamento</label>
 
       <div className={`combo__control ${open ? "is-open" : ""}`}>
         <input
-          id="deptoInput"
+          id={`${id}-input`}
           ref={inputRef}
           value={q}
           onChange={(e) => { setQ(e.target.value); setOpen(true); setActive(0); onChange?.(e.target.value); }}
@@ -133,8 +177,9 @@ export default function DepartmentCombo({
           autoComplete="off"
           role="combobox"
           aria-expanded={open}
-          aria-controls="combo-list"
+          aria-controls={comboId}
           aria-autocomplete="list"
+          aria-activedescendant={activeId}
         />
         {q && (
           <button className="combo__clear" onClick={clearInput} type="button" aria-label="Limpiar">
@@ -144,32 +189,42 @@ export default function DepartmentCombo({
         <button
           type="button"
           className="combo__arrow"
-          onClick={() => { setOpen(v => !v); inputRef.current?.focus(); }}
+          onClick={() => { setOpen(v => !v); inputRef.current?.focus({ preventScroll: true }); }}
           aria-label="Abrir lista"
+          aria-haspopup="listbox"
+          aria-controls={comboId}
+          aria-expanded={open}
         >
           <svg width="18" height="18" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
         </button>
       </div>
 
       {open && (
-        <div className="combo__panel" role="listbox" id="combo-list">
+        <div className="combo__panel" role="listbox" id={comboId}>
           {hasRecents && (
             <>
-              <div className="combo__sectionTitle">Recientes</div>
-              <ul ref={listRef} className="combo__list">
-                {recents.map((item, i) => (
-                  <li
-                    key={`r-${item}`}
-                    role="option"
-                    aria-selected={active === i}
-                    className={`combo__item ${active === i ? "is-active" : ""}`}
-                    onMouseEnter={() => setActive(i)}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => choose(item)}
-                  >
-                    {item}
-                  </li>
-                ))}
+              <div className="combo__sectionTitle">
+                Recientes
+                <button type="button" className="combo__tiny" onClick={clearRecents} aria-label="Limpiar recientes">Limpiar</button>
+              </div>
+              <ul ref={recentsRef} className="combo__list">
+                {recents.map((item, i) => {
+                  const idx = i; // virtual
+                  return (
+                    <li
+                      id={`${id}-opt-${idx}`}
+                      key={`r-${item}`}
+                      role="option"
+                      aria-selected={active === idx}
+                      className={`combo__item ${active === idx ? "is-active" : ""}`}
+                      onMouseEnter={() => setActive(idx)}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => choose(item)}
+                    >
+                      {renderLabel(item)}
+                    </li>
+                  );
+                })}
               </ul>
               <div className="combo__divider" />
             </>
@@ -179,11 +234,12 @@ export default function DepartmentCombo({
           {filtered.length === 0 ? (
             <div className="combo__empty">Sin resultados</div>
           ) : (
-            <ul ref={listRef} className="combo__list">
+            <ul ref={resultsRef} className="combo__list">
               {filtered.map((item, i) => {
                 const idx = (hasRecents ? recents.length : 0) + i;
                 return (
                   <li
+                    id={`${id}-opt-${idx}`}
                     key={item}
                     role="option"
                     aria-selected={active === idx}
@@ -192,7 +248,7 @@ export default function DepartmentCombo({
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => choose(item)}
                   >
-                    {item}
+                    {renderLabel(item)}
                   </li>
                 );
               })}

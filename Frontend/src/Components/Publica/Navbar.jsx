@@ -1,11 +1,10 @@
-/*NAVBAR CON FUNCIONALIDADES PARA EL ROL DE USUARIOS*/
-
+/* ./components/Navbar.jsx */
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../ImagenesP/InicioUsuario/LOGOFOOTER.png";
 import "../DOCSS/Navbar.css";
 import DepartmentCombo from "./DepartmentCombo";
-import adminLogo from "../ImagenesP/ImagenesLogin/ADMINLOGO.png";
+import adminLogo from "../ImagenesP/ImagenesLogin/desconectar.png";
 
 const slugify = (s) =>
   s.toLowerCase()
@@ -26,6 +25,7 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const btnRef = useRef(null);
+  const [stuck, setStuck] = useState(false);
 
   const departamentos = useMemo(
     () => [...DEPARTAMENTOS].sort((a, b) => a.localeCompare(b, "es")),
@@ -37,13 +37,13 @@ export default function Navbar() {
     navigate(`/departamentos/${slugify(name)}`);
   };
 
+  // Cierre al hacer click afuera / Escape
   useEffect(() => {
     const onClick = (e) => {
       if (!menuRef.current || !btnRef.current) return;
-      if (
-        !menuRef.current.contains(e.target) &&
-        !btnRef.current.contains(e.target)
-      ) setMenuOpen(false);
+      if (!menuRef.current.contains(e.target) && !btnRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
     };
     const onKey = (e) => { if (e.key === "Escape") setMenuOpen(false); };
     document.addEventListener("click", onClick);
@@ -54,15 +54,23 @@ export default function Navbar() {
     };
   }, []);
 
+
+  useEffect(() => {
+    const onScroll = () => setStuck(window.scrollY > 6);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <header className="nv" role="banner">
+    <header className={`nv ${stuck ? "nv--stuck" : ""}`} role="banner">
       <div className="nv__inner">
         {/* Logo */}
         <button className="nv__logoWrap" onClick={() => navigate("/Inicio")} aria-label="Ir al inicio">
           <img src={logo} alt="Explora.CO" className="nv__logo" />
         </button>
 
-
+   
         <div className="nv__center">
           <DepartmentCombo
             items={departamentos}
@@ -70,12 +78,13 @@ export default function Navbar() {
             onChange={setDepto}
             onEnter={goDepto}
             placeholder="Buscar departamento (Ctrl/Cmd + K)"
+            id="navbar-depto"
           />
           <button
             className="nv__btn nv__btn--primary"
             onClick={() => goDepto(depto)}
-            disabled={!departoValido(depto, departamentos)}
-            aria-disabled={!departoValido(depto, departamentos)}
+            disabled={!departamentoValido(depto, departamentos)}
+            aria-disabled={!departamentoValido(depto, departamentos)}
             title="Ir al departamento"
           >
             <span className="nv__btnIcon" aria-hidden="true">
@@ -117,7 +126,6 @@ export default function Navbar() {
               Favoritos
             </button>
 
-
             <div className="menu__sep" role="separator" />
 
             <button
@@ -134,7 +142,7 @@ export default function Navbar() {
   );
 }
 
-function departoValido(v, list) {
+function departamentoValido(v, list) {
   if (!v) return false;
   const s = v.trim().toLowerCase();
   return list.some(d => d.toLowerCase() === s);
