@@ -1,5 +1,7 @@
+/*FOOTER PRINCIPAL SIN FUNCIONALIDADES*/
+
 import React, { useCallback } from "react";
-import "./DOCSS/footer.css";
+import "../DOCSS/footer.css";
 import logo from "../ImagenesP/InicioUsuario/LOGOFOOTER.png";
 
 const Footer = () => {

@@ -7,15 +7,12 @@ import mysql from 'mysql2/promise';
 
 const router = Router();
 
-// __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// uploads
 const uploadsDir = path.resolve(__dirname, '../uploads');
 fs.mkdirSync(uploadsDir, { recursive: true });
 
-// Multer (múltiples fotos)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
@@ -34,7 +31,6 @@ const upload = multer({
   },
 });
 
-// MySQL
 const pool = mysql.createPool({
   host: 'localhost',
   user: 'root',
@@ -44,13 +40,6 @@ const pool = mysql.createPool({
   connectionLimit: 10,
 });
 
-/**
- * POST /api/eventos
- * form-data:
- *  - empresa_id, perfil_id
- *  - nombre_evento, descripcion
- *  - fotos[] (0..10)
- */
 router.post('/eventos', upload.array('fotos', 10), async (req, res) => {
   const conn = await pool.getConnection();
   try {
@@ -62,7 +51,6 @@ router.post('/eventos', upload.array('fotos', 10), async (req, res) => {
     const { nombre_evento, descripcion } = req.body;
     if (!nombre_evento) return res.status(400).json({ error: 'nombre_evento es requerido' });
 
-    // validar que el perfil pertenece a la empresa
     const [pRows] = await conn.query('SELECT id FROM perfilempresa WHERE id=? AND empresa_id=?', [perfil_id, empresa_id]);
     if (!pRows.length) return res.status(403).json({ error: 'El lugar no pertenece a la empresa' });
 
@@ -95,10 +83,6 @@ router.post('/eventos', upload.array('fotos', 10), async (req, res) => {
   }
 });
 
-/**
- * GET /api/eventos
- * Opcional: ?empresa_id= &perfil_id=
- */
 router.get('/eventos', async (req, res) => {
   try {
     const empresaId = req.query.empresa_id ? Number(req.query.empresa_id) : null;
@@ -112,7 +96,6 @@ router.get('/eventos', async (req, res) => {
     const sql = `SELECT * FROM eventos_lugar ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY created_at DESC`;
     const [eventos] = await pool.query(sql, args);
 
-    // fotos
     const ids = eventos.map(e => e.id);
     let fotos = [];
     if (ids.length) {
@@ -130,6 +113,156 @@ router.get('/eventos', async (req, res) => {
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'Error listando eventos' });
+  }
+});
+
+// ======================= helpers ==========================
+async function getEventoConFotos(connOrPool, id) {
+  const [eventoRows] = await connOrPool.query('SELECT * FROM eventos_lugar WHERE id=?', [id]);
+  if (!eventoRows.length) return null;
+  const evento = eventoRows[0];
+  const [fotosRows]  = await connOrPool.query('SELECT * FROM eventos_lugar_fotos WHERE evento_id=?', [id]);
+  return { ...evento, fotos: fotosRows };
+}
+
+function filePathFromUrl(image_url) {
+  // image_url se guarda como /uploads/xxxxx.ext -> tomamos el filename
+  const filename = path.basename(image_url);
+  return path.join(uploadsDir, filename);
+}
+
+// ===================== GET /eventos/:id ====================
+// Para pre-llenar el formulario en el front
+router.get('/eventos/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ error: 'id inválido' });
+
+    const data = await getEventoConFotos(pool, id);
+    if (!data) return res.status(404).json({ error: 'Evento no encontrado' });
+
+    res.json(data);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Error obteniendo evento' });
+  }
+});
+
+// ===================== PUT /eventos/:id ====================
+// Editar nombre/descripcion y gestionar fotos (agregar y/o eliminar)
+router.put('/eventos/:id', upload.array('fotos', 10), async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ error: 'id inválido' });
+
+    const empresa_id = Number(req.body.empresa_id || req.user?.id);
+    if (!empresa_id) return res.status(400).json({ error: 'empresa_id requerido' });
+
+    // Verificar propiedad del evento
+    const [rows] = await conn.query(
+      'SELECT e.*, p.empresa_id AS owner_empresa FROM eventos_lugar e JOIN perfilempresa p ON p.id=e.perfil_id WHERE e.id=?',
+      [id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Evento no encontrado' });
+    if (rows[0].owner_empresa !== empresa_id) return res.status(403).json({ error: 'No puedes modificar este evento' });
+
+    const { nombre_evento, descripcion } = req.body;
+
+    await conn.beginTransaction();
+
+    // Actualizar campos básicos (solo si llegaron)
+    if (typeof nombre_evento !== 'undefined' || typeof descripcion !== 'undefined') {
+      await conn.query(
+        'UPDATE eventos_lugar SET nombre_evento = COALESCE(?, nombre_evento), descripcion = COALESCE(?, descripcion) WHERE id=?',
+        [nombre_evento ?? null, typeof descripcion === 'undefined' ? null : descripcion, id]
+      );
+    }
+
+    // Eliminar fotos específicas (IDs) si el front manda remove_foto_ids
+    // Puede venir como JSON string o como arreglo
+    let removeIds = req.body.remove_foto_ids;
+    if (typeof removeIds === 'string') {
+      try { removeIds = JSON.parse(removeIds); } catch { removeIds = []; }
+    }
+    if (Array.isArray(removeIds) && removeIds.length) {
+      const [toDel] = await conn.query(
+        `SELECT * FROM eventos_lugar_fotos WHERE evento_id=? AND id IN (${removeIds.map(()=>'?').join(',')})`,
+        [id, ...removeIds.map(Number)]
+      );
+      // Borrar archivos del disco
+      for (const f of toDel) {
+        try { fs.unlinkSync(filePathFromUrl(f.imagen_url)); } catch {}
+      }
+      // Borrar de DB
+      await conn.query(
+        `DELETE FROM eventos_lugar_fotos WHERE evento_id=? AND id IN (${removeIds.map(()=>'?').join(',')})`,
+        [id, ...removeIds.map(Number)]
+      );
+    }
+
+    // Agregar nuevas fotos si llegaron
+    const files = req.files || [];
+    for (const f of files) {
+      const url = `/uploads/${f.filename}`;
+      await conn.query('INSERT INTO eventos_lugar_fotos (evento_id, imagen_url) VALUES (?, ?)', [id, url]);
+    }
+
+    await conn.commit();
+
+    // Devolver el evento actualizado para re-llenar el form
+    const data = await getEventoConFotos(conn, id);
+    res.json({ ok: true, evento: data });
+  } catch (e) {
+    try { await conn.rollback(); } catch {}
+    console.error(e);
+    res.status(500).json({ error: 'Error actualizando evento' });
+  } finally {
+    conn.release();
+  }
+});
+
+// =================== DELETE /eventos/:id ===================
+// Eliminar el evento, sus fotos en DB y archivos en disco
+router.delete('/eventos/:id', async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ error: 'id inválido' });
+
+    const empresa_id = Number(req.query.empresa_id || req.body?.empresa_id || req.user?.id);
+    if (!empresa_id) return res.status(400).json({ error: 'empresa_id requerido' });
+
+    // Verificar propiedad del evento
+    const [rows] = await conn.query(
+      'SELECT e.*, p.empresa_id AS owner_empresa FROM eventos_lugar e JOIN perfilempresa p ON p.id=e.perfil_id WHERE e.id=?',
+      [id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Evento no encontrado' });
+    if (rows[0].owner_empresa !== empresa_id) return res.status(403).json({ error: 'No puedes eliminar este evento' });
+
+    await conn.beginTransaction();
+
+    // Obtener fotos para borrar archivos
+    const [fotos] = await conn.query('SELECT * FROM eventos_lugar_fotos WHERE evento_id=?', [id]);
+    // Borrar DB (fotos -> evento)
+    await conn.query('DELETE FROM eventos_lugar_fotos WHERE evento_id=?', [id]);
+    await conn.query('DELETE FROM eventos_lugar WHERE id=?', [id]);
+
+    await conn.commit();
+
+    // Borrar archivos del disco (fuera de la transacción)
+    for (const f of fotos) {
+      try { fs.unlinkSync(filePathFromUrl(f.imagen_url)); } catch {}
+    }
+
+    res.json({ ok: true, eliminado: id });
+  } catch (e) {
+    try { await conn.rollback(); } catch {}
+    console.error(e);
+    res.status(500).json({ error: 'Error eliminando evento' });
+  } finally {
+    conn.release();
   }
 });
 

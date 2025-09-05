@@ -1,9 +1,11 @@
+/*FORMULARIO PARA EL REGISTRO DE USUARIOS NUEVOS*/
+
 import React, { useMemo, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast } from 'react-toastify';
-import './DOCSS/Registro.css';
+import '../DOCSS/Registro.css';
 import logo from '../ImagenesP/ImagenesLogin/LOGOCO.png';
 
 const Registro = () => {

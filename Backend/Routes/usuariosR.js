@@ -2,7 +2,6 @@ import express from 'express';
 import con from '../utils/db.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import axios from 'axios'; 
 
 const router = express.Router();
 
@@ -40,129 +39,86 @@ router.post('/register', async (req, res) => {
   });
 });
 
-
 // 🚀 LOGIN DE USUARIOS
 router.post('/userlogin', (req, res) => {
-    const { email, password } = req.body;
-    
-    const sql = "SELECT * FROM usuarios WHERE email = ?";
-    con.query(sql, [email], async (err, result) => {
-        if (err) {
-            console.error("❌ Error en la consulta:", err);
-            return res.json({ loginStatus: false, Error: "Error en la base de datos" });
-        }
-        if (result.length === 0) {
-            return res.json({ loginStatus: false, Error: "Usuario no encontrado" });
-        }
+  const { email, password } = req.body;
+  const sql = "SELECT * FROM usuarios WHERE email = ?";
 
-        try {
-            const validPassword = await bcrypt.compare(password, result[0].password);
-            if (!validPassword) {
-                return res.json({ loginStatus: false, Error: "Contraseña incorrecta" });
-            }
+  con.query(sql, [email], async (err, result) => {
+    if (err) return res.json({ loginStatus: false, Error: "Error en la base de datos" });
+    if (result.length === 0) return res.json({ loginStatus: false, Error: "Usuario no encontrado" });
 
-            // Crear el token con el rol
-            const token = jwt.sign({ role: result[0].rol, email: email }, "jwt_secret_key", { expiresIn: '1d' });
-            
-            res.cookie('token', token, { httpOnly: true }); // Opción para cookies seguras
-            return res.json({ loginStatus: true, role: result[0].rol, token }); // ⬅ Ahora enviamos el token también
+    try {
+      const user = result[0];
+      const validPassword = await bcrypt.compare(password, user.password);
+      if (!validPassword) return res.json({ loginStatus: false, Error: "Contraseña incorrecta" });
 
-        } catch (error) {
-            console.error("❌ Error en login:", error);
-            return res.json({ loginStatus: false, Error: "Error interno" });
-        }
-    });
+      const token = jwt.sign(
+        { id: user.id, role: user.rol, email: user.email },
+        "jwt_secret_key",
+        { expiresIn: '1d' }
+      );
+
+      res.cookie('token', token, { httpOnly: true });
+
+      return res.json({
+        loginStatus: true,
+        role: user.rol,
+        token,
+        id: user.id,
+        nombre: user.nombre_completo
+      });
+    } catch (error) {
+      return res.json({ loginStatus: false, Error: "Error interno" });
+    }
+  });
 });
-
 
 // 🧾 OBTENER TODOS LOS USUARIOS
 router.get('/usuarios', (req, res) => {
-    con.query("SELECT id, nombre_completo, email, rol FROM usuarios", (err, result) => {
-        if (err) {
-            console.error("Error al obtener usuarios:", err);
-            return res.status(500).json({ error: "Error al obtener usuarios" });
-        }
-        res.json(result);
-    });
+  con.query("SELECT id, nombre_completo, email, rol FROM usuarios", (err, result) => {
+    if (err) {
+      console.error("Error al obtener usuarios:", err);
+      return res.status(500).json({ error: "Error al obtener usuarios" });
+    }
+    res.json(result);
+  });
 });
 
 // 🛠️ ACTUALIZAR ROL DE USUARIO
 router.put('/usuarios/:id/rol', (req, res) => {
-    const { id } = req.params;
-    const { rol } = req.body;
+  const { id } = req.params;
+  const { rol } = req.body;
 
-    if (!['USER', 'ADMIN', 'EMPRESA'].includes(rol)) {
-  return res.status(400).json({ error: "Rol inválido" });
-}
+  if (!['USER', 'ADMIN', 'EMPRESA'].includes(rol)) {
+    return res.status(400).json({ error: "Rol inválido" });
+  }
 
-    con.query("UPDATE usuarios SET rol = ? WHERE id = ?", [rol, id], (err, result) => {
-        if (err) {
-            console.error("Error al actualizar rol:", err);
-            return res.status(500).json({ error: "Error al actualizar el rol" });
-        }
-        res.json({ message: "Rol actualizado correctamente" });
-    });
+  con.query("UPDATE usuarios SET rol = ? WHERE id = ?", [rol, id], (err, result) => {
+    if (err) {
+      console.error("Error al actualizar rol:", err);
+      return res.status(500).json({ error: "Error al actualizar el rol" });
+    }
+    res.json({ message: "Rol actualizado correctamente" });
+  });
 });
-
 
 // 🗑️ ELIMINAR USUARIO POR ID
 router.delete('/usuarios/:id', (req, res) => {
-    const { id } = req.params;
+  const { id } = req.params;
 
-    con.query("DELETE FROM usuarios WHERE id = ?", [id], (err, result) => {
-        if (err) {
-            console.error("❌ Error al eliminar usuario:", err);
-            return res.status(500).json({ error: "Error al eliminar el usuario" });
-        }
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: "Usuario no encontrado" });
-        }
-
-        res.json({ message: "Usuario eliminado correctamente" });
-    });
-});
-export const userRouter = router;
-
-// 🧾 OBTENER TODOS LOS USUARIOS
-router.get('/usuarios', (req, res) => {
-    con.query("SELECT id, nombre_completo, email, rol FROM usuarios", (err, result) => {
-        if (err) {
-            console.error("Error al obtener usuarios:", err);
-            return res.status(500).json({ error: "Error al obtener usuarios" });
-        }
-        res.json(result);
-    });
-});
-
-// 🛠️ ACTUALIZAR ROL DE USUARIO
-router.put('/usuarios/:id/rol', (req, res) => {
-    const { id } = req.params;
-    const { rol } = req.body;
-
-    if (!['USER', 'ADMIN'].includes(rol)) {
-        return res.status(400).json({ error: "Rol inválido" });
+  con.query("DELETE FROM usuarios WHERE id = ?", [id], (err, result) => {
+    if (err) {
+      console.error("❌ Error al eliminar usuario:", err);
+      return res.status(500).json({ error: "Error al eliminar el usuario" });
     }
 
-    con.query("UPDATE usuarios SET rol = ? WHERE id = ?", [rol, id], (err, result) => {
-        if (err) {
-            console.error("Error al actualizar rol:", err);
-            return res.status(500).json({ error: "Error al actualizar el rol" });
-        }
-        res.json({ message: "Rol actualizado correctamente" });
-    });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    res.json({ message: "Usuario eliminado correctamente" });
+  });
 });
 
-
-// 🧾 OBTENER TODOS LOS USUARIOS
-router.get('/usuarios', (req, res) => {
-    con.query("SELECT id, nombre_completo, email, rol FROM usuarios", (err, result) => {
-        if (err) {
-            console.error("Error al obtener usuarios:", err);
-            return res.status(500).json({ error: "Error al obtener usuarios" });
-        }
-        res.json(result);
-    });
-});
-
-
+export const userRouter = router;

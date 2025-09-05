@@ -1,12 +1,15 @@
+/*------------------------EDITAR PUBLICACION ---------------------
+ES USADA PARA MODIFICAR LAS PUBLICACIONES REALIZADAS POR UNA EMPRESA */
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import "./DOCSS/InicioEmpresa.css";
+import "../DOCSS/InicioEmpresa.css";
 
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000/api";
 
 const EditarPublicacion = () => {
-  const { id } = useParams(); // id de la publicación
+  const { id } = useParams(); 
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -15,7 +18,6 @@ const EditarPublicacion = () => {
   });
   const [loading, setLoading] = useState(true);
 
-  // Cargar datos de la publicación
   useEffect(() => {
     (async () => {
       try {

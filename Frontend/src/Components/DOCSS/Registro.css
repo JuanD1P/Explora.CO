@@ -43,7 +43,7 @@
   display:grid; place-items:center;
   min-height:100vh; padding:20px; margin:0;
   font-family:'Arial',sans-serif;
-  background:url("../../ImagenesP/ImagenesLogin/FONDO.png") center/cover no-repeat;
+  background:url("../ImagenesP/ImagenesLogin/FONDO.png") center/cover no-repeat;
 }
 
 .form-container{

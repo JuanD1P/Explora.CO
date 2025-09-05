@@ -12,8 +12,6 @@ const pool = mysql.createPool({
   connectionLimit: 10,
 });
 
-// POST /api/valoraciones  (crear/actualizar)
-// body: { perfil_id, usuario_id, estrellas, comentario? }
 router.post('/valoraciones', async (req, res) => {
   try {
     const { perfil_id, usuario_id, estrellas, comentario } = req.body;
@@ -26,17 +24,16 @@ router.post('/valoraciones', async (req, res) => {
       return res.status(400).json({ error: 'estrellas debe estar entre 1 y 5' });
     }
 
-    // (Opcional) validar que el usuario sea rol USER
     const [u] = await pool.query('SELECT rol FROM usuarios WHERE id = ?', [usuario_id]);
     if (!u.length || u[0].rol !== 'USER') {
       return res.status(403).json({ error: 'Solo los usuarios pueden valorar' });
     }
 
-    // validar que el lugar exista
+
     const [p] = await pool.query('SELECT id FROM perfilempresa WHERE id = ?', [perfil_id]);
     if (!p.length) return res.status(404).json({ error: 'Lugar no encontrado' });
 
-    // upsert (si ya valoró, se actualiza)
+
     await pool.query(
       `INSERT INTO valoraciones (perfil_id, usuario_id, estrellas, comentario)
        VALUES (?, ?, ?, ?)
@@ -51,7 +48,7 @@ router.post('/valoraciones', async (req, res) => {
   }
 });
 
-// GET /api/valoraciones?perfil_id=123  (lista de comentarios)
+
 router.get('/valoraciones', async (req, res) => {
   try {
     const perfilId = Number(req.query.perfil_id);
@@ -73,7 +70,7 @@ router.get('/valoraciones', async (req, res) => {
   }
 });
 
-// GET /api/valoraciones/summary?perfil_id=123  (promedio y conteo)
+
 router.get('/valoraciones/summary', async (req, res) => {
   try {
     const perfilId = Number(req.query.perfil_id);
