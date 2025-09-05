@@ -1,12 +1,34 @@
-/*----------------------VISTA INICIO EMPRESA----------------
-VISTA PRINCIPAL DEL INICIO DE LA EMPRESA EN DONDE SE MUESTRAN PUBLICACIONES 
-Y EVENTOS CREADOS X EL USUARIO---------------------------*/
-
 import React from "react";
 import { motion } from "framer-motion";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "../DOCSS/InicioEmpresa.css";
 import imgDemo from "../ImagenesP/InicioUsuario/ImagenPrueba.png";
+import { useConfirm } from "../common/useConfirm";
+import "../DOCSS/swal-theme.css";           // ⬅️ estilos del modal
+import { confirmAction, toastOk } from "../common/swalConfirm";  // ⬅️ helper
+
+
+const ImgSmart = ({
+  src,
+  alt,
+  className,
+  w = 1200,
+  h = 800,
+  loading = "lazy",
+  fetchPriority,
+  fit = "cover",
+}) => (
+  <img
+    src={src}
+    alt={alt}
+    decoding="async"
+    loading={loading}
+    {...(fetchPriority ? { fetchPriority } : {})}
+    width={w}
+    height={h}
+    className={`img-smart ${fit === "contain" ? "fit-contain" : "fit-cover"} ${className || ""}`}
+  />
+);
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000/api";
 const UPLOADS_HOST = import.meta.env.VITE_UPLOADS_HOST || "http://localhost:3000";
@@ -48,13 +70,27 @@ const IconPlus = (props) => (
 
 const InicioE = () => {
   const navigate = useNavigate();
+  const { confirm, ConfirmModal } = useConfirm();
 
+  /** ===== Estados ===== */
   const empresaId = React.useMemo(() => {
     const v = Number(localStorage.getItem("user-id"));
     return Number.isFinite(v) ? v : null;
   }, []);
 
+  // Publicaciones
+  const [items, setItems] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState("");
+  const [detail, setDetail] = React.useState(null);
 
+  // Eventos
+  const [eventos, setEventos] = React.useState([]);
+  const [loadingEv, setLoadingEv] = React.useState(true);
+  const [errorEv, setErrorEv] = React.useState("");
+  const [detailEv, setDetailEv] = React.useState(null);
+
+  /** ===== Efectos ===== */
   React.useEffect(() => {
     const onStorage = (e) => {
       if (e.key === "user-id") window.location.reload();
@@ -63,19 +99,7 @@ const InicioE = () => {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  /* Publicaciones  */
-  const [items, setItems] = React.useState([]);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState("");
-  const [detail, setDetail] = React.useState(null); 
-
-  /* Eventos */
-  const [eventos, setEventos] = React.useState([]);
-  const [loadingEv, setLoadingEv] = React.useState(true);
-  const [errorEv, setErrorEv] = React.useState("");
-  const [detailEv, setDetailEv] = React.useState(null); 
-
-  /* Cargar publicaciones  */
+  // Cargar publicaciones
   React.useEffect(() => {
     (async () => {
       try {
@@ -99,7 +123,7 @@ const InicioE = () => {
     })();
   }, [empresaId]);
 
-  /* Cargar eventos  */
+  // Cargar eventos
   React.useEffect(() => {
     (async () => {
       try {
@@ -134,23 +158,24 @@ const InicioE = () => {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  /** ===== Handlers ===== */
   const onImgError = (e) => { e.currentTarget.src = imgDemo; e.currentTarget.onerror = null; };
 
-  /* Handlers publicaciones */
-  const handleEdit = (id) => navigate(`/PerfilEmpresa/${id}`); // tu form ya soporta :id
-  const handleView = (p) => setDetail(p);
+  // Publicaciones
+  const handleEdit = (id) => navigate(`/PerfilEmpresa/${id}`);
   const handleDelete = async (id) => {
-    const ok = confirm("¿Seguro que quieres eliminar esta publicación? Esta acción no se puede deshacer.");
-    if (!ok) return;
-    try {
-      await apiDeletePerfil(id);
-      setItems((prev) => prev.filter((x) => x.id !== id));
-    } catch (e) {
-      alert(e.message || "No se pudo eliminar");
-    }
-  };
+  const ok = await confirmAction({
+    title: "¿Eliminar publicación?",
+    text: "Esta acción no se puede deshacer.",
+    onConfirm: async () => { await apiDeletePerfil(id); },
+  });
+  if (ok) {
+    setItems(prev => prev.filter(x => x.id !== id));
+    toastOk("Publicación eliminada");
+  }
+};
 
-  /* Handlers eventos */
+  // Eventos
   const handleEditEv = (id) => navigate(`/EventosLugar/${id}`);
   const handleViewEv = async (evOrId) => {
     const id = typeof evOrId === "object" ? evOrId.id : evOrId;
@@ -158,22 +183,24 @@ const InicioE = () => {
       const res = await fetch(`${API_BASE}/eventos/${id}`, { credentials: "include" });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "No se pudo cargar el evento");
-      setDetailEv(data); 
+      setDetailEv(data);
     } catch (e) {
       alert(e.message || "Error al cargar detalles");
     }
   };
   const handleDeleteEv = async (id) => {
-    const ok = confirm("¿Seguro que quieres eliminar este evento? Esta acción no se puede deshacer.");
-    if (!ok) return;
-    try {
-      await apiDeleteEvento(id);
-      setEventos((prev) => prev.filter((x) => x.id !== id));
-    } catch (e) {
-      alert(e.message || "No se pudo eliminar");
-    }
-  };
+  const ok = await confirmAction({
+    title: "¿Eliminar evento?",
+    text: "Esta acción no se puede deshacer.",
+    onConfirm: async () => { await apiDeleteEvento(id); },
+  });
+  if (ok) {
+    setEventos(prev => prev.filter(x => x.id !== id));
+    toastOk("Evento eliminado");
+  }
+};
 
+  /** ===== Render ===== */
   return (
     <main className="emp-root">
       {/* HEADER */}
@@ -182,16 +209,18 @@ const InicioE = () => {
           <span className="emp-logo" aria-hidden>🏢</span>
           <strong>Panel de Empresa</strong>
         </div>
-        <nav className="emp-nav">
-          <Link to="/InicioEmpresa" className="emp-link active">Inicio</Link>
-          <Link to="/empresa/estadisticas" className="emp-link">Estadísticas</Link>
-          <Link to="/ayuda" className="emp-link">Ayuda</Link>
-          <button className="emp-avatar" aria-label="Perfil de empresa">👤</button>
-        </nav>
       </header>
 
       {/* HERO */}
       <section className="emp-hero card-3d">
+        <div className="emp-hero__banner">
+          <ImgSmart
+            src="/ImagenesP/Banners/creaPubli.jpg"
+            alt="Crea y promociona tus publicaciones y eventos"
+            w={1920} h={480} fit="cover"
+          />
+        </div>
+
         <motion.div
           className="emp-cta"
           variants={fadeUp}
@@ -241,7 +270,8 @@ const InicioE = () => {
                 transition={{ duration: 0.4, ease: "easeOut" }}
               >
                 <div className="emp-card__media">
-                  <img className="media-img" src={img0} onError={onImgError} alt={title} loading="lazy" />
+                  <span className="emp-chip">Ver detalle</span>
+                  <ImgSmart className="media-img" src={img0} alt={title} w={800} h={540} />
                   {avatar ? (
                     <img className="emp-card__avatar" src={avatar} alt="Empresa" />
                   ) : (
@@ -282,55 +312,55 @@ const InicioE = () => {
             <div style={{ gridColumn: "1/-1", padding: 12 }}>Aún no tienes eventos.</div>
           )}
 
-        {eventos.map((ev) => {
-          const img0 = absUrl(ev?.fotos?.[0]?.imagen_url) || imgDemo;
-          const title = ev.titulo || ev.nombre_evento || ev.nombre || "Evento";
-          const desc = ev.descripcion || ev.detalle || "";
-          const avatar = absUrl(ev.avatar_url);
+          {eventos.map((ev) => {
+            const img0 = absUrl(ev?.fotos?.[0]?.imagen_url) || imgDemo;
+            const title = ev.titulo || ev.nombre_evento || ev.nombre || "Evento";
+            const desc = ev.descripcion || ev.detalle || "";
+            const avatar = absUrl(ev.avatar_url);
 
-          const fIni = ev.fecha_inicio || ev.fecha_desde || ev.fecha || ev.inicio;
-          const fFin = ev.fecha_fin || ev.fecha_hasta || ev.fin;
-          const hIni = ev.hora_desde || ev.hora_inicio;
-          const hFin = ev.hora_hasta || ev.hora_fin;
+            const fIni = ev.fecha_inicio || ev.fecha_desde || ev.fecha || ev.inicio;
+            const fFin = ev.fecha_fin || ev.fecha_hasta || ev.fin;
+            const hIni = ev.hora_desde || ev.hora_inicio;
+            const hFin = ev.hora_hasta || ev.hora_fin;
 
-          return (
-            <motion.article
-              key={ev.id}
-              className="emp-card hover-raise"
-              initial={{ y: 12, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-            >
-              <div className="emp-card__media">
-                <img className="media-img" src={img0} onError={onImgError} alt={title} loading="lazy" />
-                {avatar ? (
-                  <img className="emp-card__avatar" src={avatar} alt="Empresa" />
-                ) : (
-                  <div className="emp-card__avatar emp-card__avatar--fallback">🏷️</div>
-                )}
-              </div>
+            return (
+              <motion.article
+                key={ev.id}
+                className="emp-card hover-raise"
+                initial={{ y: 12, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+              >
+                <div className="emp-card__media">
+                  <ImgSmart className="media-img" src={img0} alt={title} w={800} h={540} />
+                  {avatar ? (
+                    <img className="emp-card__avatar" src={avatar} alt="Empresa" />
+                  ) : (
+                    <div className="emp-card__avatar emp-card__avatar--fallback">🏷️</div>
+                  )}
+                </div>
 
-              <div className="emp-card__body">
-                <h4 className="emp-card__title">{title}</h4>
-                <p className="emp-card__desc">
-                  {desc ? desc : <span style={{ opacity: .65 }}>Sin descripción</span>}
-                </p>
-                {(fIni || fFin || hIni || hFin) && (
-                  <div style={{ marginTop: 6, fontSize: 13, color: "#6b7280" }}>
-                    {fmtDate(fIni)} {timeHHMM(hIni)} {(fFin || hFin) && "—"} {fmtDate(fFin)} {timeHHMM(hFin)}
-                  </div>
-                )}
-              </div>
+                <div className="emp-card__body">
+                  <h4 className="emp-card__title">{title}</h4>
+                  <p className="emp-card__desc">
+                    {desc ? desc : <span style={{ opacity: .65 }}>Sin descripción</span>}
+                  </p>
+                  {(fIni || fFin || hIni || hFin) && (
+                    <div style={{ marginTop: 6, fontSize: 13, color: "#6b7280" }}>
+                      {fmtDate(fIni)} {timeHHMM(hIni)} {(fFin || hFin) && "—"} {fmtDate(fFin)} {timeHHMM(hFin)}
+                    </div>
+                  )}
+                </div>
 
-              <footer className="emp-card__actions">
-                <button className="icon-btn" title="Editar" onClick={() => handleEditEv(ev.id)}>✏️</button>
-                <button className="icon-btn" title="Eliminar" onClick={() => handleDeleteEv(ev.id)}>🗑️</button>
-                <button className="icon-btn" title="Ver" onClick={() => handleViewEv(ev.id)} aria-label={`Ver ${title}`}>👁️</button>
-              </footer>
-            </motion.article>
-          );
-        })}
+                <footer className="emp-card__actions">
+                  <button className="icon-btn" title="Editar" onClick={() => handleEditEv(ev.id)}>✏️</button>
+                  <button className="icon-btn" title="Eliminar" onClick={() => handleDeleteEv(ev.id)}>🗑️</button>
+                  <button className="icon-btn" title="Ver" onClick={() => handleViewEv(ev.id)} aria-label={`Ver ${title}`}>👁️</button>
+                </footer>
+              </motion.article>
+            );
+          })}
         </div>
       </section>
 
@@ -479,6 +509,9 @@ const InicioE = () => {
       <footer className="emp-footer">
         <small>© {new Date().getFullYear()} Tu Empresa — Panel</small>
       </footer>
+
+      {/* Modal global de confirmación */}
+      <ConfirmModal />
     </main>
   );
 };

@@ -89,6 +89,15 @@ function App() {
         />
 
         <Route
+          path="/EventosLugar/:id"
+          element={
+            <ProtectedRoute allowedRoles={['EMPRESA']}>
+              <EventosLugar />
+            </ProtectedRoute>
+          }
+        />        
+
+        <Route
           path="/empresa/editar-publicacion/:id"
           element={
             <ProtectedRoute allowedRoles={['EMPRESA']}>
