@@ -1,4 +1,4 @@
-/*VISTA DONDE SE MANEJA LA INFORMACION DE LOS DEPARTAMENTOS CON LA RELACION DE SU MUNICIPIO*/
+/* VISTA DONDE SE MANEJA LA INFORMACION DE LOS DEPARTAMENTOS CON LA RELACION DE SU MUNICIPIO */
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
@@ -13,13 +13,17 @@ const CDN_BASE =
 const slugify = (s) =>
   s
     .toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/ñ/g, "n")
     .replace(/\s+/g, "-")
     .replace(/[^a-z0-9-]/g, "");
 
 const pretty = (slug) =>
-  slug.split("-").map((t) => t.charAt(0).toUpperCase() + t.slice(1)).join(" ");
+  slug
+    .split("-")
+    .map((t) => t.charAt(0).toUpperCase() + t.slice(1))
+    .join(" ");
 
 const muniImgUrl = (deptSlug, muniSlug, ext = "jpg") =>
   `${CDN_BASE}/${deptSlug}/${muniSlug}.${ext}`;
@@ -38,7 +42,10 @@ const Departamentos = () => {
   const [search, setSearch] = useState("");
 
   const nombreDepto = useMemo(() => pretty(slug), [slug]);
-  const deptoImg = useMemo(() => `/ImagenesP/Departamentos/${slug}.jpg`, [slug]);
+  const deptoImg = useMemo(
+    () => `/ImagenesP/Departamentos/${slug}.jpg`,
+    [slug]
+  );
 
   const onDeptImgError = (e) => {
     e.currentTarget.src = imgDemo;
@@ -63,9 +70,10 @@ const Departamentos = () => {
         if (alive) setLoading(false);
       }
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [slug]);
-
 
   const filtered = useMemo(() => {
     if (!search.trim()) return municipios;
@@ -78,19 +86,27 @@ const Departamentos = () => {
 
   return (
     <main className="dep-root">
-
+      {/* HERO */}
       <section className="dep-hero" aria-label={`Resumen de ${nombreDepto}`}>
         <div className="hero-img">
           <img src={deptoImg} alt={nombreDepto} onError={onDeptImgError} />
           <div className="hero-overlay" />
         </div>
+
         <div className="hero-text">
-          <Link to="/Inicio" className="back">← Inicio</Link>
-          <h1 className="dep-title">{nombreDepto}</h1>
-          <p className="dep-sub">Explora sus municipios, imágenes y datos clave.</p>
+          <Link to="/Inicio" className="back btn-back" aria-label="Volver al inicio">
+            ← Inicio
+          </Link>
+
+          {/* Panel oscuro translúcido para mejorar legibilidad */}
+          <div className="hero-box">
+            <h1 className="dep-title">{nombreDepto}</h1>
+            <p className="dep-sub">
+              Explora sus municipios, imágenes y datos clave.
+            </p>
+          </div>
         </div>
       </section>
-
 
       <section className="dep-grid">
         {/* IZQUIERDA */}
@@ -99,11 +115,12 @@ const Departamentos = () => {
             <h2 id="mun-heading">Municipios</h2>
             <div className="toolbar">
               <div className="search">
-                <span className="ico" aria-hidden>🔎</span>
+                <span className="ico" aria-hidden>                   
+                </span>
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Buscar municipio…"
+                  placeholder=" 🔍 Buscar municipio…"
                   aria-label="Buscar municipio"
                 />
                 {search && (
@@ -117,7 +134,11 @@ const Departamentos = () => {
                 )}
               </div>
               <span className="count" aria-live="polite">
-                {loading ? "Cargando…" : `${filtered.length} ${filtered.length === 1 ? "resultado" : "resultados"}`}
+                {loading
+                  ? "Cargando…"
+                  : `${filtered.length} ${
+                      filtered.length === 1 ? "resultado" : "resultados"
+                    }`}
               </span>
             </div>
           </header>
@@ -126,10 +147,14 @@ const Departamentos = () => {
             {loading ? (
               <>
                 <ul className="mun-list">
-                  {Array.from({ length: 8 }).map((_, i) => <SkeletonItem key={`sA-${i}`} />)}
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <SkeletonItem key={`sA-${i}`} />
+                  ))}
                 </ul>
                 <ul className="mun-list">
-                  {Array.from({ length: 8 }).map((_, i) => <SkeletonItem key={`sB-${i}`} />)}
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <SkeletonItem key={`sB-${i}`} />
+                  ))}
                 </ul>
               </>
             ) : filtered.length === 0 ? (
@@ -150,7 +175,11 @@ const Departamentos = () => {
                             onError={(e) => {
                               if (!e.currentTarget.dataset.triedWebp) {
                                 e.currentTarget.dataset.triedWebp = "1";
-                                e.currentTarget.src = muniImgUrl(slug, m.slug, "webp");
+                                e.currentTarget.src = muniImgUrl(
+                                  slug,
+                                  m.slug,
+                                  "webp"
+                                );
                               } else {
                                 e.currentTarget.src = `https://api.dicebear.com/7.x/shapes/svg?seed=${m.slug}`;
                               }
@@ -176,22 +205,32 @@ const Departamentos = () => {
         {/* DERECHA */}
         <aside className="info-card" aria-labelledby="info-heading">
           <div className="info-sticky">
-            <h2 id="info-heading" className="info-title">Departamento</h2>
+            <h2 id="info-heading" className="info-title">
+              Departamento
+            </h2>
             <div className="info-cover">
               <img src={deptoImg} alt={nombreDepto} onError={onDeptImgError} />
             </div>
             <div className="info-body">
               <p className="muted">Resumen general</p>
               <p>
-                Reemplaza este texto con datos reales: población, clima, principales
-                atractivos, altitud, gentilicio, etc.
+                Reemplaza este texto con datos reales: población, clima,
+                principales atractivos, altitud, gentilicio, etc.
               </p>
               <div className="info-pills" role="list">
-                <span role="listitem" className="pill">Clima templado</span>
-                <span role="listitem" className="pill">+100 municipios</span>
-                <span role="listitem" className="pill">Turismo natural</span>
+                <span role="listitem" className="pill">
+                  Clima templado
+                </span>
+                <span role="listitem" className="pill">
+                  +100 municipios
+                </span>
+                <span role="listitem" className="pill">
+                  Turismo natural
+                </span>
               </div>
-              <Link to="/Inicio" className="info-cta">Ver otros departamentos</Link>
+              <Link to="/Inicio" className="info-cta">
+                Ver otros departamentos
+              </Link>
             </div>
           </div>
         </aside>
