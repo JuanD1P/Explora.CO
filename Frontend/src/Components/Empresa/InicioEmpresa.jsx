@@ -7,20 +7,18 @@ import { useConfirm } from "../common/useConfirm";
 import "../DOCSS/swal-theme.css";
 import { confirmAction, toastOk } from "../common/swalConfirm";
 
-/* ===== Config ===== */
+
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000/api";
 const RAW_UPLOADS_HOST = import.meta.env.VITE_UPLOADS_HOST || "http://localhost:3000";
-// normalizamos (sin /api al final y sin / al final)
+
 const UPLOADS_HOST = RAW_UPLOADS_HOST.replace(/\/api\/?$/, "").replace(/\/+$/, "");
 
-/* ===== Helpers ===== */
 const fadeUp = { hidden: { y: 16, opacity: 0 }, show: { y: 0, opacity: 1 } };
 const currency = (v, cur = "COP") =>
   v == null ? null : new Intl.NumberFormat("es-CO", { style: "currency", currency: cur }).format(Number(v));
 const timeHHMM = (t) => (t ? String(t).slice(0, 5) : null);
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString("es-CO", { year: "numeric", month: "short", day: "numeric" }) : null);
 
-// Convierte a absoluta si viene relativa. Si viene absoluta, la deja igual.
 const absUrl = (u) => {
   if (!u) return null;
   if (/^https?:\/\//i.test(u)) return u;
@@ -31,7 +29,7 @@ const absUrl = (u) => {
   }
 };
 
-/* ===== ImgSmart con fallback ===== */
+
 const ImgSmart = ({
   src,
   alt,
@@ -65,7 +63,6 @@ const ImgSmart = ({
   );
 };
 
-/* ===== API helpers ===== */
 async function apiDeletePerfil(id) {
   const res = await fetch(`${API_BASE}/perfiles/${id}`, { method: "DELETE", credentials: "include" });
   if (!res.ok) {
@@ -76,7 +73,6 @@ async function apiDeletePerfil(id) {
   return res.json();
 }
 
-// ⬇️ Enviar empresa_id por querystring (match con tu backend)
 async function apiDeleteEvento(id, empresaId) {
   const url = `${API_BASE}/eventos/${id}?empresa_id=${encodeURIComponent(empresaId)}`;
   const res = await fetch(url, { method: "DELETE", credentials: "include" });
@@ -99,25 +95,25 @@ const InicioE = () => {
   const navigate = useNavigate();
   const { confirm, ConfirmModal } = useConfirm();
 
-  /** ===== Estados ===== */
+
   const empresaId = React.useMemo(() => {
     const v = Number(localStorage.getItem("user-id"));
     return Number.isFinite(v) ? v : null;
   }, []);
 
-  // Publicaciones
+
   const [items, setItems] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
   const [detail, setDetail] = React.useState(null);
 
-  // Eventos
+
   const [eventos, setEventos] = React.useState([]);
   const [loadingEv, setLoadingEv] = React.useState(true);
   const [errorEv, setErrorEv] = React.useState("");
   const [detailEv, setDetailEv] = React.useState(null);
 
-  /** ===== Efectos ===== */
+
   React.useEffect(() => {
     const onStorage = (e) => {
       if (e.key === "user-id") window.location.reload();
@@ -126,7 +122,6 @@ const InicioE = () => {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  // Cargar publicaciones
   React.useEffect(() => {
     (async () => {
       try {
@@ -150,7 +145,6 @@ const InicioE = () => {
     })();
   }, [empresaId]);
 
-  // Cargar eventos
   React.useEffect(() => {
     (async () => {
       try {
@@ -185,10 +179,8 @@ const InicioE = () => {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  /** ===== Handlers ===== */
   const onImgError = (e) => { e.currentTarget.src = imgDemo; e.currentTarget.onerror = null; };
 
-  // Publicaciones
   const handleEdit = (id) => navigate(`/PerfilEmpresa/${id}`);
   const handleDelete = async (id) => {
     const ok = await confirmAction({
@@ -234,7 +226,6 @@ const InicioE = () => {
   /** ===== Render ===== */
   return (
     <main className="emp-root">
-      {/* HEADER */}
       <header className="emp-header glass">
         <div className="emp-brand">
           <span className="emp-logo" aria-hidden>🏢</span>
@@ -242,7 +233,6 @@ const InicioE = () => {
         </div>
       </header>
 
-      {/* HERO */}
       <section className="emp-hero card-3d">
         <div className="emp-hero__banner">
           <ImgSmart
@@ -270,7 +260,6 @@ const InicioE = () => {
         </motion.div>
       </section>
 
-      {/* ====== PUBLICACIONES ====== */}
       <section className="emp-section emp-section--glass">
         <div className="emp-section__head">
           <h3>Mis publicaciones</h3>
@@ -344,7 +333,6 @@ const InicioE = () => {
           )}
 
           {eventos.map((ev) => {
-            // El backend ya devuelve absoluta; absUrl solo por seguridad si viniera relativa.
             const img0 = absUrl(ev?.fotos?.[0]?.imagen_url) || imgDemo;
 
             const title = ev.titulo || ev.nombre_evento || ev.nombre || "Evento";
@@ -397,7 +385,6 @@ const InicioE = () => {
         </div>
       </section>
 
-      {/* MODAL DETALLES PUBLICACIÓN */}
       {detail && (
         <div className="emp-modal__backdrop" onClick={() => setDetail(null)} role="dialog" aria-modal="true">
           <div className="emp-modal" onClick={(e) => e.stopPropagation()}>
@@ -463,7 +450,6 @@ const InicioE = () => {
         </div>
       )}
 
-      {/* MODAL DETALLES EVENTO */}
       {detailEv && (
         <div className="emp-modal__backdrop" onClick={() => setDetailEv(null)} role="dialog" aria-modal="true">
           <div className="emp-modal" onClick={(e) => e.stopPropagation()}>
@@ -538,12 +524,10 @@ const InicioE = () => {
         </div>
       )}
 
-      {/* FOOTER */}
       <footer className="emp-footer">
         <small>© {new Date().getFullYear()} Tu Empresa — Panel</small>
       </footer>
 
-      {/* Modal global de confirmación */}
       <ConfirmModal />
     </main>
   );
