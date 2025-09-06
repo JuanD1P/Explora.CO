@@ -1,20 +1,20 @@
 /* ---------------------- EVENTOS ------------------
-ESTA VISTA ES LA ENCARGADA D ECREAR EVENTOS CON 
+ESTA VISTA ES LA ENCARGADA DE CREAR EVENTOS CON 
 RESPECTO A UNA PUBLICACION ---------------------*/
 
 import React, { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "../DOCSS/PerfilEmpresa.css";
 
-const API_URL = "http://localhost:3000";  
+const API_URL = "http://localhost:3000";
 const UPLOADS_HOST = import.meta.env?.VITE_UPLOADS_HOST || "http://localhost:3000";
-const EMPRESA_ID = parseInt(localStorage.getItem("user-id"), 10);
+const EMPRESA_ID = Number(localStorage.getItem("user-id"));
 
 const MAX_MB = 10;
-const ACCEPTED = ["image/jpeg", "image/png", "image/webp"]; 
+const ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
 
 export default function EventosLugar() {
-  const { id: routeId } = useParams();  
+  const { id: routeId } = useParams();
   const navigate = useNavigate();
 
   const [isEdit, setIsEdit] = useState(Boolean(routeId));
@@ -25,7 +25,6 @@ export default function EventosLugar() {
   const [nombreEvento, setNombreEvento] = useState("");
   const [descripcion, setDescripcion] = useState("");
 
-
   const [fotoPrincipal, setFotoPrincipal] = useState(null);
   const [fotoPrincipalPreview, setFotoPrincipalPreview] = useState(null);
   const principalInputRef = useRef(null);
@@ -35,8 +34,7 @@ export default function EventosLugar() {
   const [enviando, setEnviando] = useState(false);
   const [eventos, setEventos] = useState([]);
 
-
-  const [fotosExistentes, setFotosExistentes] = useState([]); 
+  const [fotosExistentes, setFotosExistentes] = useState([]);
   const [removeIds, setRemoveIds] = useState([]);
 
   const [imgBust, setImgBust] = useState(0);
@@ -51,7 +49,7 @@ export default function EventosLugar() {
       return url.toString();
     } catch {
       const sep = base.includes("?") ? "&" : "?";
-      return `${base}${forceFresh ? `${sep}v=${Date.now()}` : (imgBust ? `${sep}v=${imgBust}` : "")}`;
+      return `${base}${forceFresh ? `${sep}v=${Date.now()}` : imgBust ? `${sep}v=${imgBust}` : ""}`;
     }
   };
 
@@ -64,6 +62,7 @@ export default function EventosLugar() {
   };
 
   const cargarLugares = async () => {
+    if (!Number.isFinite(EMPRESA_ID)) return;
     const res = await fetch(`${API_URL}/api/perfiles?empresa_id=${EMPRESA_ID}`, { credentials: "include" });
     const data = await res.json();
     setLugares(data || []);
@@ -71,6 +70,7 @@ export default function EventosLugar() {
   };
 
   const cargarEventos = async (pid = null) => {
+    if (!Number.isFinite(EMPRESA_ID)) return;
     const url = pid
       ? `${API_URL}/api/eventos?empresa_id=${EMPRESA_ID}&perfil_id=${pid}`
       : `${API_URL}/api/eventos?empresa_id=${EMPRESA_ID}`;
@@ -135,7 +135,7 @@ export default function EventosLugar() {
   const removeExtraAt = (i) => setFotosExtra((prev) => prev.filter((_, idx) => idx !== i));
 
   const toggleRemoveExistente = (fotoId) => {
-    setRemoveIds((prev) => prev.includes(fotoId) ? prev.filter((x) => x !== fotoId) : [...prev, fotoId]);
+    setRemoveIds((prev) => (prev.includes(fotoId) ? prev.filter((x) => x !== fotoId) : [...prev, fotoId]));
   };
 
   const quitarExistenteDirecto = (fotoId) => {
@@ -147,6 +147,7 @@ export default function EventosLugar() {
     e.preventDefault();
     if (!perfilId) return alert("Selecciona un lugar");
     if (!nombreEvento.trim()) return alert("Ingresa el nombre del evento");
+    if (!Number.isFinite(EMPRESA_ID)) return alert("Debes iniciar sesión de empresa (empresa_id faltante).");
 
     const fd = new FormData();
     fd.append("empresa_id", String(EMPRESA_ID));
@@ -173,6 +174,7 @@ export default function EventosLugar() {
         alert("Evento creado");
       }
 
+      // Limpieza opcional si te quedaras
       setNombreEvento("");
       setDescripcion("");
       setFotoPrincipal(null);
@@ -181,8 +183,10 @@ export default function EventosLugar() {
       setRemoveIds([]);
       setFotosExistentes(isEdit ? (data?.evento?.fotos || data?.fotos || []) : []);
       if (perfilId) await cargarEventos(perfilId);
-
       setImgBust(Date.now());
+
+      // Redirigir tras guardar
+      navigate("/InicioEmpresa");
     } catch (err) {
       alert(err.message);
     } finally {
@@ -294,7 +298,11 @@ export default function EventosLugar() {
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) onPickPrincipal(f); }}
                 role="button" tabIndex={0}
-                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && principalInputRef.current?.click()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    principalInputRef.current?.click();
+                  }
+                }}
               >
                 <div className="pe-dropzone__icon">📷</div>
                 <div className="pe-dropzone__text">
@@ -327,8 +335,17 @@ export default function EventosLugar() {
               ))}
             </div>
 
-            <div className="file-btn" onClick={() => addExtraInputRef.current?.click()} role="button" tabIndex={0}
-                 onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && addExtraInputRef.current?.click()}>
+            <div
+              className="file-btn"
+              onClick={() => addExtraInputRef.current?.click()}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  addExtraInputRef.current?.click();
+                }
+              }}
+            >
               <span className="file-btn__icon">➕</span>
               <span className="file-btn__label">Agregar otra foto</span>
             </div>
@@ -342,7 +359,14 @@ export default function EventosLugar() {
             {enviando ? "Guardando..." : isEdit ? "Guardar cambios" : "Crear evento"}
           </button>
           {isEdit && (
-            <button type="button" className="btn btn-outline" onClick={() => { sessionStorage.removeItem("evento-edit"); navigate("/EventosLugar"); }}>
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={() => {
+                sessionStorage.removeItem("evento-edit");
+                navigate("/InicioEmpresa"); // Redirigir al cancelar edición
+              }}
+            >
               Cancelar edición
             </button>
           )}

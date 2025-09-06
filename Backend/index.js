@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 
 import dotenv from 'dotenv';
 dotenv.config();
+import { UPLOADS_DIR } from './utils/paths.js';
 
 import { userRouter } from './Routes/usuariosR.js';
 import { perfilesRouter } from './Routes/perfilesR.js';
@@ -23,6 +24,10 @@ app.use(cors({
 
 app.use(express.json());
 app.use(cookieParser());
+
+// 👉 servir SIEMPRE la misma carpeta
+app.use('/uploads', express.static(UPLOADS_DIR));
+console.log('📂 Sirviendo /uploads desde:', UPLOADS_DIR);
 
 // __dirname en ESM
 const __filename = fileURLToPath(import.meta.url);

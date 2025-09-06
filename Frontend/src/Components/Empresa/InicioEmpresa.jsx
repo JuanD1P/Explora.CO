@@ -4,10 +4,34 @@ import { useNavigate } from "react-router-dom";
 import "../DOCSS/InicioEmpresa.css";
 import imgDemo from "../ImagenesP/InicioUsuario/ImagenPrueba.png";
 import { useConfirm } from "../common/useConfirm";
-import "../DOCSS/swal-theme.css";           // ⬅️ estilos del modal
-import { confirmAction, toastOk } from "../common/swalConfirm";  // ⬅️ helper
+import "../DOCSS/swal-theme.css";
+import { confirmAction, toastOk } from "../common/swalConfirm";
 
+/* ===== Config ===== */
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000/api";
+const RAW_UPLOADS_HOST = import.meta.env.VITE_UPLOADS_HOST || "http://localhost:3000";
+// normalizamos (sin /api al final y sin / al final)
+const UPLOADS_HOST = RAW_UPLOADS_HOST.replace(/\/api\/?$/, "").replace(/\/+$/, "");
 
+/* ===== Helpers ===== */
+const fadeUp = { hidden: { y: 16, opacity: 0 }, show: { y: 0, opacity: 1 } };
+const currency = (v, cur = "COP") =>
+  v == null ? null : new Intl.NumberFormat("es-CO", { style: "currency", currency: cur }).format(Number(v));
+const timeHHMM = (t) => (t ? String(t).slice(0, 5) : null);
+const fmtDate = (d) => (d ? new Date(d).toLocaleDateString("es-CO", { year: "numeric", month: "short", day: "numeric" }) : null);
+
+// Convierte a absoluta si viene relativa. Si viene absoluta, la deja igual.
+const absUrl = (u) => {
+  if (!u) return null;
+  if (/^https?:\/\//i.test(u)) return u;
+  try {
+    return new URL(u, UPLOADS_HOST + "/").href;
+  } catch {
+    return `${UPLOADS_HOST}${u.startsWith("/") ? "" : "/"}${u}`;
+  }
+};
+
+/* ===== ImgSmart con fallback ===== */
 const ImgSmart = ({
   src,
   alt,
@@ -17,29 +41,29 @@ const ImgSmart = ({
   loading = "lazy",
   fetchPriority,
   fit = "cover",
-}) => (
-  <img
-    src={src}
-    alt={alt}
-    decoding="async"
-    loading={loading}
-    {...(fetchPriority ? { fetchPriority } : {})}
-    width={w}
-    height={h}
-    className={`img-smart ${fit === "contain" ? "fit-contain" : "fit-cover"} ${className || ""}`}
-  />
-);
+}) => {
+  const [broken, setBroken] = React.useState(false);
+  const finalSrc = broken ? imgDemo : src;
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000/api";
-const UPLOADS_HOST = import.meta.env.VITE_UPLOADS_HOST || "http://localhost:3000";
-
-/* ===== Helpers ===== */
-const fadeUp = { hidden: { y: 16, opacity: 0 }, show: { y: 0, opacity: 1 } };
-const currency = (v, cur = "COP") =>
-  v == null ? null : new Intl.NumberFormat("es-CO", { style: "currency", currency: cur }).format(Number(v));
-const timeHHMM = (t) => (t ? String(t).slice(0, 5) : null);
-const fmtDate = (d) => (d ? new Date(d).toLocaleDateString("es-CO", { year: "numeric", month: "short", day: "numeric" }) : null);
-const absUrl = (u) => (!u ? null : u.startsWith("http") ? u : `${UPLOADS_HOST}${u}`);
+  return (
+    <img
+      src={finalSrc}
+      alt={alt}
+      decoding="async"
+      loading={loading}
+      {...(fetchPriority ? { fetchPriority } : {})}
+      width={w}
+      height={h}
+      className={`img-smart ${fit === "contain" ? "fit-contain" : "fit-cover"} ${className || ""}`}
+      onError={() => {
+        if (!broken) {
+          console.warn("[ImgSmart] Error cargando imagen:", src);
+          setBroken(true);
+        }
+      }}
+    />
+  );
+};
 
 /* ===== API helpers ===== */
 async function apiDeletePerfil(id) {
@@ -51,8 +75,11 @@ async function apiDeletePerfil(id) {
   }
   return res.json();
 }
-async function apiDeleteEvento(id) {
-  const res = await fetch(`${API_BASE}/eventos/${id}`, { method: "DELETE", credentials: "include" });
+
+// ⬇️ Enviar empresa_id por querystring (match con tu backend)
+async function apiDeleteEvento(id, empresaId) {
+  const url = `${API_BASE}/eventos/${id}?empresa_id=${encodeURIComponent(empresaId)}`;
+  const res = await fetch(url, { method: "DELETE", credentials: "include" });
   if (!res.ok) {
     let msg = "Error al eliminar";
     try { msg = (await res.json()).error || msg; } catch {}
@@ -164,16 +191,16 @@ const InicioE = () => {
   // Publicaciones
   const handleEdit = (id) => navigate(`/PerfilEmpresa/${id}`);
   const handleDelete = async (id) => {
-  const ok = await confirmAction({
-    title: "¿Eliminar publicación?",
-    text: "Esta acción no se puede deshacer.",
-    onConfirm: async () => { await apiDeletePerfil(id); },
-  });
-  if (ok) {
-    setItems(prev => prev.filter(x => x.id !== id));
-    toastOk("Publicación eliminada");
-  }
-};
+    const ok = await confirmAction({
+      title: "¿Eliminar publicación?",
+      text: "Esta acción no se puede deshacer.",
+      onConfirm: async () => { await apiDeletePerfil(id); },
+    });
+    if (ok) {
+      setItems(prev => prev.filter(x => x.id !== id));
+      toastOk("Publicación eliminada");
+    }
+  };
 
   // Eventos
   const handleEditEv = (id) => navigate(`/EventosLugar/${id}`);
@@ -189,16 +216,20 @@ const InicioE = () => {
     }
   };
   const handleDeleteEv = async (id) => {
-  const ok = await confirmAction({
-    title: "¿Eliminar evento?",
-    text: "Esta acción no se puede deshacer.",
-    onConfirm: async () => { await apiDeleteEvento(id); },
-  });
-  if (ok) {
-    setEventos(prev => prev.filter(x => x.id !== id));
-    toastOk("Evento eliminado");
-  }
-};
+    if (empresaId == null) {
+      alert("Debes iniciar sesión. Falta empresa_id.");
+      return;
+    }
+    const ok = await confirmAction({
+      title: "¿Eliminar evento?",
+      text: "Esta acción no se puede deshacer.",
+      onConfirm: async () => { await apiDeleteEvento(id, empresaId); },
+    });
+    if (ok) {
+      setEventos(prev => prev.filter(x => x.id !== id));
+      toastOk("Evento eliminado");
+    }
+  };
 
   /** ===== Render ===== */
   return (
@@ -273,7 +304,7 @@ const InicioE = () => {
                   <span className="emp-chip">Ver detalle</span>
                   <ImgSmart className="media-img" src={img0} alt={title} w={800} h={540} />
                   {avatar ? (
-                    <img className="emp-card__avatar" src={avatar} alt="Empresa" />
+                    <img className="emp-card__avatar" src={avatar} alt="Empresa" onError={onImgError} />
                   ) : (
                     <div className="emp-card__avatar emp-card__avatar--fallback">🏷️</div>
                   )}
@@ -313,7 +344,9 @@ const InicioE = () => {
           )}
 
           {eventos.map((ev) => {
+            // El backend ya devuelve absoluta; absUrl solo por seguridad si viniera relativa.
             const img0 = absUrl(ev?.fotos?.[0]?.imagen_url) || imgDemo;
+
             const title = ev.titulo || ev.nombre_evento || ev.nombre || "Evento";
             const desc = ev.descripcion || ev.detalle || "";
             const avatar = absUrl(ev.avatar_url);
@@ -335,7 +368,7 @@ const InicioE = () => {
                 <div className="emp-card__media">
                   <ImgSmart className="media-img" src={img0} alt={title} w={800} h={540} />
                   {avatar ? (
-                    <img className="emp-card__avatar" src={avatar} alt="Empresa" />
+                    <img className="emp-card__avatar" src={avatar} alt="Empresa" onError={onImgError} />
                   ) : (
                     <div className="emp-card__avatar emp-card__avatar--fallback">🏷️</div>
                   )}
@@ -376,7 +409,7 @@ const InicioE = () => {
                 onError={onImgError}
               />
               {detail.avatar_url ? (
-                <img className="emp-modal__avatar" src={absUrl(detail.avatar_url)} alt="Empresa" />
+                <img className="emp-modal__avatar" src={absUrl(detail.avatar_url)} alt="Empresa" onError={onImgError} />
               ) : (
                 <div className="emp-modal__avatar emp-card__avatar--fallback">🏷️</div>
               )}
@@ -442,7 +475,7 @@ const InicioE = () => {
                 onError={onImgError}
               />
               {detailEv.avatar_url ? (
-                <img className="emp-modal__avatar" src={absUrl(detailEv.avatar_url)} alt="Empresa" />
+                <img className="emp-modal__avatar" src={absUrl(detailEv.avatar_url)} alt="Empresa" onError={onImgError} />
               ) : (
                 <div className="emp-modal__avatar emp-card__avatar--fallback">🏷️</div>
               )}
