@@ -5,6 +5,83 @@
   --s1:6px; --s2:10px; --s3:14px; --s4:18px;
   --shadow:0 6px 18px rgba(0,0,0,.06);
 }
+/* ================= VALORACIONES GOD ================= */
+.rating-god{
+  display:grid;
+  grid-template-columns: 180px 1fr;
+  gap:20px;
+  margin-bottom:20px;
+}
+.rating-main{
+  background:#fff;
+  border:2px solid #ede9fe;
+  border-radius:16px;
+  padding:20px;
+  text-align:center;
+  box-shadow:0 8px 20px rgba(124,58,237,.15);
+}
+.rating-main .rating-number{
+  font-size:48px;
+  font-weight:900;
+  color:#4c1d95;
+  margin-bottom:6px;
+}
+.rating-main .rating-count{
+  font-size:13px;
+  color:var(--muted);
+}
+
+/* barras */
+.rating-bars{ display:grid; gap:8px; align-items:center; }
+.bar-row{ display:grid; grid-template-columns: 32px 1fr 28px; gap:8px; align-items:center; font-size:13px; }
+.bar-track{ background:#f3f4f6; height:12px; border-radius:999px; overflow:hidden; }
+.bar-fill{ height:100%; border-radius:999px; transition: width .5s ease; }
+.bar-5 .bar-fill{ background:#22c55e; }  /* verde */
+.bar-4 .bar-fill{ background:#3b82f6; }  /* azul */
+.bar-3 .bar-fill{ background:#eab308; }  /* amarillo */
+.bar-2 .bar-fill{ background:#f97316; }  /* naranja */
+.bar-1 .bar-fill{ background:#ef4444; }  /* rojo */
+
+/* reviews */
+.reviews{ display:grid; gap:14px; }
+.review-card{
+  display:flex; gap:12px; align-items:flex-start;
+  background:#fff;
+  border:1px solid #e5e0ff;
+  border-radius:14px;
+  padding:14px;
+  box-shadow:0 4px 12px rgba(0,0,0,.08);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.review-card:hover{ transform:translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,.12); }
+
+.review-avatar img{
+  width:48px; height:48px;
+  border-radius:50%;
+  border:2px solid #ede9fe;
+}
+.review-body{ flex:1; }
+.review-head{ display:flex; justify-content:space-between; align-items:baseline; }
+.review-author{ margin:0; font-weight:700; font-size:15px; color:#1f2937; }
+.review-when{ font-size:12px; color:var(--muted); }
+.review-text{ margin:6px 0 0; font-size:14px; line-height:1.4; }
+
+/* botón */
+.pubk-btn-review{
+  margin-top:12px;
+  height:40px; padding:0 18px;
+  border-radius:999px;
+  border:none;
+  background: linear-gradient(135deg,#1a0069,#7c3aed);
+  color:#fff; font-weight:800; cursor:pointer;
+  box-shadow:0 6px 16px rgba(124,58,237,.35);
+  transition: all .2s ease;
+}
+.pubk-btn-review:hover{
+  transform: translateY(-1px);
+  box-shadow:0 10px 22px rgba(124,58,237,.45);
+}
+
 
 .pubk-root *{ box-sizing:border-box; }
 .pubk-root img{ display:block; max-width:100%; height:auto; }
@@ -106,4 +183,122 @@
 @media (max-width: 520px){
   .pubk-kv-row{ grid-template-columns: 1fr; }
   .pubk-two{ grid-template-columns: 1fr; }
+}
+/* ========= Secciones genéricas (titulares y contenedor) ========= */
+.pubk-section{
+  margin-top: 14px;
+  border:1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg,#f7f2ff,#fff);
+  box-shadow: var(--shadow);
+  padding: var(--s3);
+}
+.pubk-sec-head{
+  display:flex; align-items:flex-end; justify-content:space-between; gap:12px;
+  margin-bottom: 12px;
+}
+.pubk-sec-title{
+  margin:0; font-size: clamp(18px, 2vw, 24px);
+  color:#4c1d95;
+}
+
+/* ========= EVENTOS ========= */
+.pubk-events-grid{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.event-card{
+  background:#0f2840; /* tono frío para contrastar con morados del sistema */
+  border-radius: var(--r-lg);
+  color:#e8f2ff;
+  overflow:hidden;
+  display:grid;
+  grid-template-rows: 160px 1fr;
+  border:1px solid rgba(255,255,255,.08);
+}
+.event-media img{
+  width:100%; height:100%; object-fit:cover; display:block;
+}
+.event-body{ padding:12px; }
+.event-title{ margin:0 0 6px; font-size:16px; color:#fff; }
+.event-meta{ display:flex; gap:8px; align-items:center; margin-bottom:6px; }
+.event-date{
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:12px; background:#123655; color:#cfe7ff; border-radius:999px; padding:2px 8px;
+}
+.event-desc{ margin:0; font-size:13px; color:#e3efff; }
+
+/* ========= RATING / VALORACIONES ========= */
+.rating-head{
+  display:grid;
+  grid-template-columns: 220px 1fr;
+  gap: 18px;
+  align-items:center;
+}
+.rating-score{
+  background:#fff; border:1px solid var(--line); border-radius:12px;
+  padding:12px; text-align:center; min-height:100%;
+  box-shadow: var(--shadow);
+}
+.rating-number{ font-size: 34px; font-weight: 800; line-height:1; color:#1f2937; }
+.rating-count{ font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* barras */
+.rating-bars{ display:grid; gap:6px; }
+.bar-row{ display:grid; grid-template-columns: 18px 1fr 32px; align-items:center; gap:8px; }
+.bar-label{ font-size:12px; color:#4c1d95; text-align:right; }
+.bar-track{
+  height:10px; background:#ede9fe; border-radius:999px; overflow:hidden;
+  border:1px solid #e9e5ff;
+}
+.bar-fill{
+  height:100%; background:#5b21b6; border-radius:999px;
+  box-shadow: inset 0 -1px 0 rgba(255,255,255,.35);
+}
+.bar-val{ font-size:12px; color:#6b7280; text-align:right; }
+
+/* estrellas */
+.stars{ display:inline-flex; gap:2px; align-items:center; }
+.star{ font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; line-height:1; }
+.star-lg{ font-size: 22px; }
+.star-md{ font-size: 16px; }
+.star.is-full{ color:#f59e0b; }
+.star.is-half{
+  color:#f59e0b;
+  background: linear-gradient(90deg, #f59e0b 50%, #e5e7eb 50%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.star.is-empty{ color:#e5e7eb; }
+
+/* tarjetas de reviews */
+.reviews{ display:grid; gap:12px; }
+.review-card{
+  background:#fff; border:1px solid var(--line); border-radius: var(--r-lg);
+  padding: 12px; box-shadow: var(--shadow);
+}
+.review-head{ display:flex; gap:8px; align-items:baseline; justify-content:space-between; }
+.review-author{ margin:0; font-size:15px; }
+.review-when{ font-size:12px; color:var(--muted); }
+.review-text{ margin:6px 0 0; font-size:14px; line-height:1.35; }
+
+.pubk-btn-outline{
+  justify-self:start; margin-top:4px;
+  height:36px; padding:0 14px; border-radius:999px;
+  border:1px solid #e9e5ff; background:#fff; color:#5b21b6; font-weight:800; cursor:pointer;
+  box-shadow: 0 2px 6px rgba(124,58,237,.06);
+}
+.pubk-btn-outline:hover{ background:#5b21b6; color:#fff; }
+
+/* ========= Responsive ========= */
+@media (max-width: 1024px){
+  .pubk-events-grid{ grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 700px){
+  .rating-head{ grid-template-columns: 1fr; }
+}
+@media (max-width: 640px){
+  .pubk-events-grid{ grid-template-columns: 1fr; }
 }

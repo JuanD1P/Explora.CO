@@ -32,14 +32,7 @@ const upload = multer({
 });
 
 
-const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'exploraco',
-  waitForConnections: true,
-  connectionLimit: 10,
-});
+
 
 router.post('/empresa/avatar', upload.single('avatar'), async (req, res) => {
   try {
