@@ -10,7 +10,6 @@ import { confirmAction, toastOk } from "../common/swalConfirm";
 /* ===== Config ===== */
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000/api";
 const RAW_UPLOADS_HOST = import.meta.env.VITE_UPLOADS_HOST || "http://localhost:3000";
-// normalizamos (sin /api al final y sin / al final)
 const UPLOADS_HOST = RAW_UPLOADS_HOST.replace(/\/api\/?$/, "").replace(/\/+$/, "");
 
 /* ===== Helpers ===== */
