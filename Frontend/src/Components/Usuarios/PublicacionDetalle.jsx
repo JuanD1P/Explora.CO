@@ -676,3 +676,6 @@ export default function PublicacionDetalle() {
     </main>
   );
 }
+
+
+
