@@ -7,17 +7,16 @@ import { useConfirm } from "../common/useConfirm";
 import "../DOCSS/swal-theme.css";
 import { confirmAction, toastOk } from "../common/swalConfirm";
 
-
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000/api";
 const RAW_UPLOADS_HOST = import.meta.env.VITE_UPLOADS_HOST || "http://localhost:3000";
-
 const UPLOADS_HOST = RAW_UPLOADS_HOST.replace(/\/api\/?$/, "").replace(/\/+$/, "");
 
 const fadeUp = { hidden: { y: 16, opacity: 0 }, show: { y: 0, opacity: 1 } };
 const currency = (v, cur = "COP") =>
   v == null ? null : new Intl.NumberFormat("es-CO", { style: "currency", currency: cur }).format(Number(v));
 const timeHHMM = (t) => (t ? String(t).slice(0, 5) : null);
-const fmtDate = (d) => (d ? new Date(d).toLocaleDateString("es-CO", { year: "numeric", month: "short", day: "numeric" }) : null);
+const fmtDate = (d) =>
+  d ? new Date(d).toLocaleDateString("es-CO", { year: "numeric", month: "short", day: "numeric" }) : null;
 
 const absUrl = (u) => {
   if (!u) return null;
@@ -28,7 +27,6 @@ const absUrl = (u) => {
     return `${UPLOADS_HOST}${u.startsWith("/") ? "" : "/"}${u}`;
   }
 };
-
 
 const ImgSmart = ({
   src,
@@ -63,11 +61,37 @@ const ImgSmart = ({
   );
 };
 
+/* === Mini estrellas === */
+function Stars({ value = 0, outOf = 5, size = 16 }) {
+  const full = Math.floor(value);
+  const hasHalf = value - full >= 0.5;
+  return (
+    <div className="emp-stars" aria-label={`Calificación ${value} de 5`} style={{ display: "inline-flex", gap: 2 }}>
+      {Array.from({ length: outOf }).map((_, i) => {
+        const isFull = i < full;
+        const isHalf = !isFull && i === full && hasHalf;
+        return (
+          <span
+            key={i}
+            aria-hidden="true"
+            style={{ fontSize: size, lineHeight: 1, color: "#fbbf24" }}
+            title={`${value.toFixed(1)} / ${outOf}`}
+          >
+            {isFull ? "★" : isHalf ? "⯪" : "☆"}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 async function apiDeletePerfil(id) {
   const res = await fetch(`${API_BASE}/perfiles/${id}`, { method: "DELETE", credentials: "include" });
   if (!res.ok) {
     let msg = "Error al eliminar";
-    try { msg = (await res.json()).error || msg; } catch {}
+    try {
+      msg = (await res.json()).error || msg;
+    } catch {}
     throw new Error(msg);
   }
   return res.json();
@@ -78,10 +102,26 @@ async function apiDeleteEvento(id, empresaId) {
   const res = await fetch(url, { method: "DELETE", credentials: "include" });
   if (!res.ok) {
     let msg = "Error al eliminar";
-    try { msg = (await res.json()).error || msg; } catch {}
+    try {
+      msg = (await res.json()).error || msg;
+    } catch {}
     throw new Error(msg);
   }
   return res.json();
+}
+
+/* === Ratings API === */
+async function apiGetRatingSummary(perfilId) {
+  const url = `${API_BASE}/valoraciones/summary?perfil_id=${encodeURIComponent(perfilId)}`;
+  const res = await fetch(url, { credentials: "include" });
+  if (!res.ok) {
+    let msg = "No se pudo obtener resumen de valoraciones";
+    try {
+      msg = (await res.json()).error || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return res.json(); // { total, promedio, dist }
 }
 
 const IconPlus = (props) => (
@@ -95,24 +135,24 @@ const InicioE = () => {
   const navigate = useNavigate();
   const { confirm, ConfirmModal } = useConfirm();
 
-
   const empresaId = React.useMemo(() => {
     const v = Number(localStorage.getItem("user-id"));
     return Number.isFinite(v) ? v : null;
   }, []);
-
 
   const [items, setItems] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
   const [detail, setDetail] = React.useState(null);
 
-
   const [eventos, setEventos] = React.useState([]);
   const [loadingEv, setLoadingEv] = React.useState(true);
   const [errorEv, setErrorEv] = React.useState("");
   const [detailEv, setDetailEv] = React.useState(null);
 
+  /* ratings cache: { [perfilId]: { total, promedio, dist } } */
+  const [ratings, setRatings] = React.useState({});
+  const [loadingRatings, setLoadingRatings] = React.useState(false);
 
   React.useEffect(() => {
     const onStorage = (e) => {
@@ -144,6 +184,41 @@ const InicioE = () => {
       }
     })();
   }, [empresaId]);
+
+  /* Cargar ratings por publicación al tener items */
+  React.useEffect(() => {
+    let alive = true;
+    (async () => {
+      if (!items?.length) return;
+      setLoadingRatings(true);
+      try {
+        const missing = items.map((i) => i.id).filter((id) => ratings[id] == null);
+        if (missing.length === 0) return;
+        const pairs = await Promise.all(
+          missing.map(async (id) => {
+            try {
+              const data = await apiGetRatingSummary(id);
+              return [id, data];
+            } catch (e) {
+              console.warn("Error rating perfil", id, e);
+              return [id, { total: 0, promedio: 0, dist: { 1:0,2:0,3:0,4:0,5:0 } }];
+            }
+          })
+        );
+        if (!alive) return;
+        setRatings((prev) => {
+          const next = { ...prev };
+          for (const [id, data] of pairs) next[id] = data;
+          return next;
+        });
+      } finally {
+        alive && setLoadingRatings(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [items]); // importante
 
   React.useEffect(() => {
     (async () => {
@@ -179,17 +254,22 @@ const InicioE = () => {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const onImgError = (e) => { e.currentTarget.src = imgDemo; e.currentTarget.onerror = null; };
+  const onImgError = (e) => {
+    e.currentTarget.src = imgDemo;
+    e.currentTarget.onerror = null;
+  };
 
   const handleEdit = (id) => navigate(`/PerfilEmpresa/${id}`);
   const handleDelete = async (id) => {
     const ok = await confirmAction({
       title: "¿Eliminar publicación?",
       text: "Esta acción no se puede deshacer.",
-      onConfirm: async () => { await apiDeletePerfil(id); },
+      onConfirm: async () => {
+        await apiDeletePerfil(id);
+      },
     });
     if (ok) {
-      setItems(prev => prev.filter(x => x.id !== id));
+      setItems((prev) => prev.filter((x) => x.id !== id));
       toastOk("Publicación eliminada");
     }
   };
@@ -215,10 +295,12 @@ const InicioE = () => {
     const ok = await confirmAction({
       title: "¿Eliminar evento?",
       text: "Esta acción no se puede deshacer.",
-      onConfirm: async () => { await apiDeleteEvento(id, empresaId); },
+      onConfirm: async () => {
+        await apiDeleteEvento(id, empresaId);
+      },
     });
     if (ok) {
-      setEventos(prev => prev.filter(x => x.id !== id));
+      setEventos((prev) => prev.filter((x) => x.id !== id));
       toastOk("Evento eliminado");
     }
   };
@@ -228,11 +310,7 @@ const InicioE = () => {
     <main className="emp-root">
       <section className="emp-hero card-3d">
         <div className="emp-hero__banner">
-          <ImgSmart
-            src="/ImagenesP/Banners/creaPubli.jpg"
-            alt="Crea y promociona tus publicaciones y eventos"
-            w={1920} h={480} fit="cover"
-          />
+          <ImgSmart src="/ImagenesP/Banners/creaPubli.jpg" alt="Crea y promociona tus publicaciones y eventos" w={1920} h={480} fit="cover" />
         </div>
 
         <motion.div
@@ -272,6 +350,7 @@ const InicioE = () => {
             const title = p.nombre_lugar || p.titulo || "Publicación";
             const desc = p.descripcion || p.desc || "";
             const avatar = absUrl(p.avatar_url);
+            const r = ratings[p.id];
 
             return (
               <motion.article
@@ -290,6 +369,13 @@ const InicioE = () => {
                   ) : (
                     <div className="emp-card__avatar emp-card__avatar--fallback">🏷️</div>
                   )}
+
+                  {/* chip con rating opcional encima de la imagen */}
+                  {r && r.total > 0 && (
+                    <div className="emp-chip emp-chip--rating">
+                      ⭐ {Number(r.promedio || 0).toFixed(1)} ({r.total})
+                    </div>
+                  )}
                 </div>
 
                 <div className="emp-card__body">
@@ -297,6 +383,22 @@ const InicioE = () => {
                   <p className="emp-card__desc">
                     {desc ? desc : <span style={{ opacity: 0.65 }}>Sin descripción</span>}
                   </p>
+
+                  {/* Valoraciones debajo del texto */}
+                  <div style={{ marginTop: 6 }}>
+                    {loadingRatings && !r ? (
+                      <span style={{ fontSize: 12, color: "#9CA3AF" }}>Cargando calificación…</span>
+                    ) : r && r.total > 0 ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <Stars value={Number(r.promedio || 0)} />
+                        <span style={{ fontSize: 13, color: "#374151" }}>
+                          {Number(r.promedio || 0).toFixed(1)} <span style={{ color: "#6B7280" }}>({r.total})</span>
+                        </span>
+                      </div>
+                    ) : (
+                      <span style={{ fontSize: 12, color: "#9CA3AF" }}>Sin valoraciones</span>
+                    )}
+                  </div>
                 </div>
 
                 <footer className="emp-card__actions">
@@ -327,11 +429,9 @@ const InicioE = () => {
 
           {eventos.map((ev) => {
             const img0 = absUrl(ev?.fotos?.[0]?.imagen_url) || imgDemo;
-
             const title = ev.titulo || ev.nombre_evento || ev.nombre || "Evento";
             const desc = ev.descripcion || ev.detalle || "";
             const avatar = absUrl(ev.avatar_url);
-
             const fIni = ev.fecha_inicio || ev.fecha_desde || ev.fecha || ev.inicio;
             const fFin = ev.fecha_fin || ev.fecha_hasta || ev.fin;
             const hIni = ev.hora_desde || ev.hora_inicio;
@@ -378,6 +478,7 @@ const InicioE = () => {
         </div>
       </section>
 
+      {/* ===== MODAL DETALLE PUBLICACIÓN ===== */}
       {detail && (
         <div className="emp-modal__backdrop" onClick={() => setDetail(null)} role="dialog" aria-modal="true">
           <div className="emp-modal" onClick={(e) => e.stopPropagation()}>
@@ -400,6 +501,17 @@ const InicioE = () => {
               <div style={{ color: "#6b7280", marginBottom: 10 }}>
                 {detail.categoria} — {detail.ciudad}
               </div>
+
+              {/* Rating en modal */}
+              {ratings[detail.id] && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                  <Stars value={Number(ratings[detail.id].promedio || 0)} />
+                  <span style={{ fontSize: 13, color: "#374151" }}>
+                    {Number(ratings[detail.id].promedio || 0).toFixed(1)}{" "}
+                    <span style={{ color: "#6B7280" }}>({ratings[detail.id].total})</span>
+                  </span>
+                </div>
+              )}
 
               {(detail.horario_desde || detail.horario_hasta) && (
                 <div className="emp-detail-row">
@@ -443,6 +555,7 @@ const InicioE = () => {
         </div>
       )}
 
+      {/* ===== MODAL DETALLE EVENTO ===== */}
       {detailEv && (
         <div className="emp-modal__backdrop" onClick={() => setDetailEv(null)} role="dialog" aria-modal="true">
           <div className="emp-modal" onClick={(e) => e.stopPropagation()}>
