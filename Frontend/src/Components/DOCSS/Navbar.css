@@ -19,6 +19,24 @@
 
 /* ===== Header ===== */
 
+
+.nv__empresaTitle {
+  font-size: 1.3rem;       
+  font-weight: 600;    
+  color: #ffffff;           
+  padding: 8px 16px;        
+  border-radius: 12px;
+  background: transparent;  
+  white-space: nowrap;
+}
+.nv__empresaTitle {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6); /* brillo sutil */
+}
+
+
 .userBtn__avatar { width: 28px; height: 28px; }
 .userBtn__avatarImg { width: 100%; height: 100%; object-fit: cover; display: block; }
 

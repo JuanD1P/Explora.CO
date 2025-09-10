@@ -5,8 +5,10 @@ import "../DOCSS/Navbar.css";
 import DepartmentCombo from "./DepartmentCombo";
 
 const slugify = (s) =>
-  s.toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/ñ/g, "n")
     .replace(/\s+/g, "-");
 
@@ -29,6 +31,12 @@ function avatarFrom(name = "Usuario", photo = "") {
   }
 }
 
+function departamentoValido(v, list) {
+  if (!v) return false;
+  const s = v.trim().toLowerCase();
+  return list.some((d) => d.toLowerCase() === s);
+}
+
 export default function Navbar() {
   const navigate = useNavigate();
   const [depto, setDepto] = useState("");
@@ -36,6 +44,9 @@ export default function Navbar() {
   const menuRef = useRef(null);
   const btnRef = useRef(null);
   const [stuck, setStuck] = useState(false);
+
+
+  const role = localStorage.getItem("user-role") || ""; // "USER" | "EMPRESA" | "ADMIN" | ""
 
   const departamentos = useMemo(
     () => [...DEPARTAMENTOS].sort((a, b) => a.localeCompare(b, "es")),
@@ -54,7 +65,9 @@ export default function Navbar() {
         setMenuOpen(false);
       }
     };
-    const onKey = (e) => { if (e.key === "Escape") setMenuOpen(false); };
+    const onKey = (e) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
     document.addEventListener("click", onClick);
     document.addEventListener("keydown", onKey);
     return () => {
@@ -70,45 +83,75 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const userName = localStorage.getItem("user-name") || localStorage.getItem("nombre_completo") || "Opciones";
-  const userPhoto = localStorage.getItem("user-avatar") || localStorage.getItem("foto_url") || "";
+  const userName =
+    localStorage.getItem("user-name") ||
+    localStorage.getItem("nombre_completo") ||
+    "Opciones";
+
+  const userPhoto =
+    localStorage.getItem("user-avatar") ||
+    localStorage.getItem("foto_url") ||
+    "";
+
   const userAvatar = avatarFrom(userName, userPhoto);
 
   return (
     <header className={`nv ${stuck ? "nv--stuck" : ""}`} role="banner">
       <div className="nv__inner">
-        <button className="nv__logoWrap" onClick={() => navigate("/Inicio")} aria-label="Ir al inicio">
+        <button
+          className="nv__logoWrap"
+          onClick={() => {
+            if (role === "EMPRESA") navigate("/InicioEmpresa");
+            else navigate("/Inicio");
+          }}
+          aria-label="Ir al inicio"
+        >
           <img src={logo} alt="Explora.CO" className="nv__logo" />
         </button>
 
+        {/* Centro de la navbar condicionada por rol */}
         <div className="nv__center">
-          <DepartmentCombo
-            items={departamentos}
-            value={depto}
-            onChange={setDepto}
-            onEnter={goDepto}
-            placeholder="Buscar Dpto (ctrl+k)"
-            id="navbar-depto"
-          />
-          <button
-            className="nv__btn nv__btn--primary"
-            onClick={() => goDepto(depto)}
-            disabled={!departamentoValido(depto, departamentos)}
-            aria-disabled={!departamentoValido(depto, departamentos)}
-            title="Ir al departamento"
-          >
-            <span className="nv__btnIcon" aria-hidden="true">
-              <svg width="16" height="16" viewBox="0 0 24 24"><path d="M11 4a7 7 0 015.291 11.707l3.001 3.002-1.414 1.414-3.002-3A7 7 0 1111 4zm0 2a5 5 0 100 10 5 5 0 000-10z" fill="currentColor"/></svg>
-            </span>
-            Buscar
-          </button>
+          {role === "EMPRESA" ? (
+            <div className="nv__empresaTitle" aria-label="Panel de Empresa">
+              <strong>Panel de Empresa</strong>
+            </div>
+          ) : role === "USER" ? (
+            <>
+              <DepartmentCombo
+                items={departamentos}
+                value={depto}
+                onChange={setDepto}
+                onEnter={goDepto}
+                placeholder="Buscar Dpto (ctrl+k)"
+                id="navbar-depto"
+              />
+              <button
+                className="nv__btn nv__btn--primary"
+                onClick={() => goDepto(depto)}
+                disabled={!departamentoValido(depto, departamentos)}
+                aria-disabled={!departamentoValido(depto, departamentos)}
+                title="Ir al departamento"
+              >
+                <span className="nv__btnIcon" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24">
+                    <path
+                      d="M11 4a7 7 0 015.291 11.707l3.001 3.002-1.414 1.414-3.002-3A7 7 0 1111 4zm0 2a5 5 0 100 10 5 5 0 000-10z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </span>
+                Buscar
+              </button>
+            </>
+          ) : null}
         </div>
 
+        {/* Usuario / Menú */}
         <div className="nv__user">
           <button
             ref={btnRef}
             className="userBtn"
-            onClick={() => setMenuOpen(v => !v)}
+            onClick={() => setMenuOpen((v) => !v)}
             aria-haspopup="menu"
             aria-expanded={menuOpen}
             aria-controls="menuUsuario"
@@ -118,12 +161,28 @@ export default function Navbar() {
                 src={userAvatar}
                 alt=""
                 className="userBtn__avatarImg"
-                onError={(e) => { e.currentTarget.src = `https://api.dicebear.com/7.x/thumbs/svg?seed=${encodeURIComponent(userName)}`; }}
+                onError={(e) => {
+                  e.currentTarget.src = `https://api.dicebear.com/7.x/thumbs/svg?seed=${encodeURIComponent(
+                    userName
+                  )}`;
+                }}
               />
             </span>
             <span className="userBtn__name">{userName || "Mi cuenta"}</span>
-            <svg className={`chev ${menuOpen ? "is-open" : ""}`} viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-              <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <svg
+              className={`chev ${menuOpen ? "is-open" : ""}`}
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              aria-hidden="true"
+            >
+              <path
+                d="M7 10l5 5 5-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
             </svg>
           </button>
 
@@ -133,12 +192,15 @@ export default function Navbar() {
             role="menu"
             className={`menu ${menuOpen ? "is-open" : ""}`}
           >
-
             <div className="menu__sep" role="separator" />
             <button
               role="menuitem"
               className="menu__item menu__item--danger"
-              onClick={() => { setMenuOpen(false); navigate("/userlogin"); }}
+              onClick={() => {
+                setMenuOpen(false);
+
+                navigate("/userlogin");
+              }}
             >
               Cerrar sesión
             </button>
@@ -147,10 +209,4 @@ export default function Navbar() {
       </div>
     </header>
   );
-}
-
-function departamentoValido(v, list) {
-  if (!v) return false;
-  const s = v.trim().toLowerCase();
-  return list.some(d => d.toLowerCase() === s);
 }
