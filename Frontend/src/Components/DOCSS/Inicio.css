@@ -4,238 +4,122 @@ html,body,#root{height:100%}
 img{max-width:100%;display:block}
 
 :root{
-  --bg:#ffffff; --surface:#ffffff; --surface-2:#f8fbff; --border:#e8edf3; --shadow:0 12px 28px rgba(9,30,66,.08);
+  --bg:#ffffff; --surface:#ffffff; --surface-2:#f8fbff; --border:#e8edf3;
+  --shadow:0 6px 18px rgba(9,30,66,.08);
   --text:#0f1a2a; --muted:#657588; --accent:#0ea5e9; --accent-2:#0b4a78;
-  --gold-1:#E7C46A; --gold-2:#C89B3C; --r-xl:18px; --r-lg:14px;
+  --r-xl:18px; --r-lg:14px;
 }
 
-/* ===== BG decorativo (SIN animaciones) ===== */
-.ini-hero-bg{ position: fixed; inset: 0; z-index: -1; overflow: hidden; background:
-  radial-gradient(1200px 600px at 10% -10%, #dac5f6 0%, transparent 60%),
-  radial-gradient(900px 600px at 110% 20%, #ead9ea 0%, transparent 55%);
+/* ===== BG ===== */
+.ini-hero-bg{
+  position: fixed; inset: 0; z-index: -1; overflow: hidden;
+  background:
+    radial-gradient(1200px 600px at 10% -10%, #dac5f6 0%, transparent 60%),
+    radial-gradient(900px 600px at 110% 20%, #ead9ea 0%, transparent 55%);
 }
-.ini-bg-bubble{ position: absolute; border-radius: 999px; filter: blur(60px); opacity:.35 }
+.ini-bg-bubble{ position: absolute; border-radius: 999px; opacity:.25; }
 .b1{ width: 32vw; height: 32vw; left: -10vw; top: -8vw; background: #cbeaff; }
 .b2{ width: 28vw; height: 28vw; right: -8vw; top: 12vh; background: #d6ffe7; }
 .b3{ width: 36vw; height: 36vw; left: 18vw; bottom: -14vh; background: #ffe9cf; }
 
 /* ===== Base ===== */
-.ini-root{ 
-  background: url("../ImagenesP/InicioUsuario/fondoIni.jpg")center/cover no-repeat;
-  background-attachment: fixed; /* opcional */
-  color: var(--text); 
-  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; 
+.ini-root{
+  background: url("../ImagenesP/InicioUsuario/fondoIni.jpg") center/cover no-repeat;
+  color: var(--text);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   padding: 24px 16px 56px;
 }
-.glass{ background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.8)); border: 1px solid var(--border); backdrop-filter: blur(6px); box-shadow: var(--shadow); border-radius: var(--r-xl) }
+.glass{
+  background: rgba(255,255,255,.86);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  border-radius: var(--r-xl);
+}
 .card-3d{ border-radius: var(--r-xl); overflow: hidden; border: 1px solid var(--border) }
 .hover-raise{ transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, filter .2s ease; border: 1px solid var(--border); box-shadow: var(--shadow) }
-.hover-raise:hover{ transform: translateY(-3px); border-color:#dbe7f3; box-shadow: 0 18px 40px rgba(9,30,66,.12); filter: drop-shadow(0 8px 18px rgba(14,165,233,.08)) }
+.hover-raise:hover{ transform: translateY(-2px); border-color:#dbe7f3; box-shadow: 0 10px 24px rgba(9,30,66,.10); filter: drop-shadow(0 6px 14px rgba(14,165,233,.08)) }
 
 .ini-title{ margin:0 0 4px; font-size: clamp(26px, 3.2vw, 38px); color: var(--accent-2); font-weight: 800 }
 .ini-h2{ margin:0 0 10px; font-size: clamp(20px, 2.2vw, 28px); color: var(--accent) }
 .ini-muted{ color: var(--muted) }
-.ini-section__head h3{ margin:0; color: var(--accent-2); font-size: 22px; letter-spacing:.2px; font-weight:800 }
+.ini-section__head h3{ margin:0; color: var(--accent-2); font-size: 22px; font-weight:800 }
 .ini-section__head p{ margin: 4px 0 10px; color: var(--muted) }
 
 .ini-intro{ max-width: 1200px; margin: 0 auto 28px; display:grid; grid-template-columns: 1.12fr 1fr; gap: 16px; align-items: stretch; }
 .ini-intro__text{ padding: 22px 24px }
 .ini-intro__text p{ margin: 0 0 8px; line-height: 1.6 } 
 
-/* ===== Hero (SIN parallax ni animaciones decorativas) ===== */
-.ini-hero{
-  border-radius: var(--r-xl);
-  overflow: hidden;
-  aspect-ratio: 16/9;
-}
-
-.ini-hero .carousel__track{
-  padding: 0 !important;
-  gap: 0 !important;
-  border-radius: inherit;   /* por si acaso */
-  overflow: hidden;
-}
-
-/* Ocultamos cualquier parallax */
-.ini-hero__parallax{ display:none }
-
-/* Track/slide/img heredan y respetan el redondeo del Hero */
-.ini-hero .carousel__track,
-.ini-hero .hero__slide,
-.ini-hero .ini-hero__img{
-  border-radius: inherit;
-  overflow: hidden;
-}
-
-/* Imagen del Hero: tamaño + animaciones suaves */
-.ini-hero .ini-hero__img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-
-  /* Animaciones añadidas */
-  animation: heroIn .8s ease-out both;           /* aparición */
-  transition: transform .6s ease, filter .6s ease; /* hover/vida */
-  will-change: transform, filter;
-}
-
-/* Leve “Ken Burns” al pasar el mouse por el Hero completo */
-.ini-hero:hover .ini-hero__img{
-  transform: scale(1.035);
-  filter: saturate(1.04) contrast(1.02);
-}
-
-@keyframes heroIn{
-  from{ opacity:0; transform: scale(1.03); }
-  to  { opacity:1; transform: scale(1); }
-}
+/* ===== Hero ===== */
+.ini-hero{ border-radius: var(--r-xl); overflow: hidden; aspect-ratio: 16/9; }
+.ini-hero .carousel__track{ padding: 0 !important; gap: 0 !important; border-radius: inherit; overflow: hidden; }
+.ini-hero .ini-hero__img{ width:100%; height:100%; object-fit:cover; border-radius: inherit; transition: transform .6s ease, filter .6s ease; }
+.ini-hero:hover .ini-hero__img{ will-change: transform, filter; transform: scale(1.035); filter: saturate(1.04) contrast(1.02); }
 
 .ini-section{ max-width: 1200px; margin: 34px auto 10px }
 
-/* ===== Cards categorías (solo zoom hover) ===== */
+/* ===== Categorías ===== */
 .ini-carousel{ border-radius: var(--r-xl); padding: 16px; position: relative }
-.ini-card{ display:flex; flex-direction: column; align-items: center; text-decoration: none; color: inherit; background:#fff; border-radius: var(--r-lg); overflow: hidden; position: relative }
-.ini-thumb{ width: 100%; position: relative; overflow: hidden;
-/* Aseguramos el redondeo superior igual que la card */
-  border-top-left-radius: var(--r-lg);
-  border-top-right-radius: var(--r-lg);
-}
-.ini-thumb img{ width:100%; aspect-ratio: 16/10; object-fit: cover; border-bottom: 1px solid var(--border); transition: transform .35s ease;
-/* Hereda el radio del contenedor para evitar esquinas rectas */
-  border-top-left-radius: inherit;
-  border-top-right-radius: inherit;
-/* Aparición suave de primeras miniaturas */
-  animation: thumbIn .5s ease-out both;
-}
-@keyframes thumbIn{
-  from{ opacity:0; transform: translateY(6px) scale(1.01); }
-  to  { opacity:1; transform: translateY(0) scale(1); }
-}
-
-.ini-card:hover .ini-thumb img{ transform: scale(1.035) translateY(-1%) }
-/* SIN brillo */
-.shine{ display:none }
+.ini-card{ display:flex; flex-direction: column; align-items: center; text-decoration: none; color: inherit; background:#fff; border-radius: var(--r-lg); overflow: hidden; }
+.ini-thumb{ width: 100%; position: relative; overflow: hidden; border-top-left-radius: var(--r-lg); border-top-right-radius: var(--r-lg); }
+.ini-thumb img{ width:100%; aspect-ratio: 16/10; object-fit: cover; border-bottom: 1px solid var(--border); transition: transform .35s ease; }
+.ini-card:hover .ini-thumb img{ transform: scale(1.035) translateY(-1%); }
 .ini-card span{ padding: 10px 12px 14px; font-weight: 700 }
 
 /* ===== Banner ===== */
-.ini-banner{ max-width: 1200px; margin: 34px auto; position: relative }
+.ini-banner{ max-width: 1200px; margin: 34px auto; }
 .ini-banner img{ width:100%; height: 260px; object-fit: cover }
 
-/* ===== Deps (SIN coverflow ni shimmer; solo hover zoom) ===== */
+/* ===== Deps ===== */
 .deps-wrap{ position: relative; border-radius: 18px; padding: 18px 48px; overflow: hidden }
-@media (max-width: 640px){ .deps-wrap{ padding: 14px 44px } }
-
-.dep-card{
-  position: relative; display:flex; flex-direction: column; justify-content: space-between;
-  min-height: 260px; background:#fff; border-radius: 18px; text-decoration:none; color:inherit;
-  border: 1px solid var(--border);
-  box-shadow: 0 12px 28px rgba(9,30,66,.08);
-  overflow: hidden;
-  transition: transform .15s ease, box-shadow .2s ease, border-color .15s ease, filter .2s ease;
-  will-change: transform, box-shadow;
-}
-.dep-card:hover{ transform: translateY(-3px); box-shadow: 0 18px 40px rgba(9,30,66,.12); border-color:#dbe7f3; filter: drop-shadow(0 10px 24px rgba(14,165,233,.10)) }
-.dep-card__border{ display:none } /* quitamos borde animado */
-.dep-card__media{ position: relative; width:100%; aspect-ratio: 16/10; overflow: hidden }
-.dep-card__img{ width:100%; height:100%; object-fit: cover; transform: scale(1.0) translateY(0); transition: transform .45s ease }
+.dep-card{ display:flex; flex-direction: column; min-height: 260px; background:#fff; border-radius: 18px; text-decoration:none; color:inherit; border: 1px solid var(--border); box-shadow: var(--shadow); transition: transform .15s ease, box-shadow .2s ease, border-color .15s ease, filter .2s ease; }
+.dep-card:hover{ transform: translateY(-2px); box-shadow: 0 10px 24px rgba(9,30,66,.10); border-color:#dbe7f3; filter: drop-shadow(0 6px 14px rgba(14,165,233,.08)) }
+.dep-card__media{ width:100%; aspect-ratio: 16/10; overflow: hidden }
+.dep-card__img{ width:100%; height:100%; object-fit: cover; transition: transform .45s ease }
 .dep-card:hover .dep-card__img{ transform: scale(1.06) translateY(-1%) }
-/* SIN skeleton shimmer */
-.dep-card__skeleton{ display:none }
-.dep-chip{
-  position:absolute; left:10px; top:10px; z-index:2;
-  background:rgba(255,255,255,.96); border:1px solid var(--border);
-  color:#0b4a78; font-weight:800; font-size:12px; padding:6px 10px; border-radius: 999px;
-}
+.dep-chip{ position:absolute; left:10px; top:10px; background:rgba(255,255,255,.96); border:1px solid var(--border); color:#0b4a78; font-weight:800; font-size:12px; padding:6px 10px; border-radius: 999px; }
 .dep-card__foot{ display:flex; align-items:center; justify-content: space-between; padding: 12px 14px }
 .dep-card__title{ margin:0; font-size: 16px }
 .dep-card__cta{ width: 10px; height: 10px; border-radius: 999px; background: var(--accent) }
 
-/* ===== Imagen base ===== */
-.img-smart{ display:block; width:100%; height:auto; background: #0f172a10; transition: opacity .2s ease-out }
-
-/* ===== Carrusel NATIVO (sin animaciones decorativas) ===== */
+/* ===== Carrusel ===== */
 .carousel{ position:relative; }
-.carousel__track{
-  display:grid;
-  grid-auto-flow: column;
-  gap:16px;
-  overflow-x:auto;
-  scroll-snap-type:x mandatory;
-  scroll-behavior:smooth;
-  -webkit-overflow-scrolling: touch;
-  padding: 18px 2px 6px;
-}
+.carousel__track{ display:grid; grid-auto-flow: column; gap:16px; overflow-x:auto; scroll-snap-type:x mandatory; scroll-behavior:smooth; overscroll-behavior-inline: contain; padding: 18px 2px 6px; }
 .carousel__track::-webkit-scrollbar{ height:0 }
 .carousel__slide{ scroll-snap-align: center; }
 
-/* Hero: ocupa todo */
+/* Hero */
 .hero__track{ grid-auto-columns: 100%; }
-.hero__slide{ 
-  height: 100%;
-  border-radius: inherit;
-  overflow: hidden;
-}
-.ini-hero__img{ width:100%; height:100%; object-fit:cover; display: block; border-radius: inherit; }
+.hero__slide{ height: 100%; border-radius: inherit; overflow: hidden; }
 
-/* Flechas generales */
-.carousel__nav{
-  position:absolute; top: 50%; transform: translateY(-50%);
-  width: 42px; height: 42px; border-radius: 999px;
-  background: rgba(255,255,255,.95); border: 1px solid var(--border);
-  box-shadow: 0 10px 24px rgba(9,30,66,.08); color: var(--accent-2);
-  display:grid; place-items:center; font-size: 18px; font-weight: 800; z-index: 5; cursor:pointer;
-}
+/* Flechas */
+.carousel__nav{ position:absolute; top:50%; transform:translateY(-50%); width: 42px; height: 42px; border-radius: 999px; background: rgba(255,255,255,.95); border: 1px solid var(--border); box-shadow: var(--shadow); color: var(--accent-2); display:grid; place-items:center; font-size: 18px; font-weight: 800; cursor:pointer; }
 .carousel__nav.is-prev{ left: 10px }
 .carousel__nav.is-next{ right: 10px }
 .carousel__nav:hover{ transform: translateY(-50%) scale(1.06); background:#f0f8ff; color:#0a4b78 }
 
-/* Bullets */
-.carousel__dots{
-  position:absolute; left:50%; bottom: 12px; transform:translateX(-50%);
-  display:flex; gap: 8px; z-index:4;
-  padding: 6px 10px; border-radius: 999px;
-  background: rgba(255,255,255,.65); border: 1px solid var(--border); backdrop-filter: blur(4px);
-}
-.dot{
-  width: 8px; height: 8px; border-radius: 999px; background:#d6e3ef; border:none; cursor:pointer;
-}
+/* Dots */
+.carousel__dots{ position:absolute; left:50%; bottom: 12px; transform:translateX(-50%); display:flex; gap: 8px; padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,.65); border: 1px solid var(--border); }
+.dot{ width: 8px; height: 8px; border-radius: 999px; background:#d6e3ef; cursor:pointer; }
 .dot.is-active, .carousel__dots .dot:hover{ background: var(--accent) }
 
-/* Categorías: 1.2, 2 y 3 por viewport */
-.ini-carousel .carousel__track{ grid-auto-columns: 82%; }
-@media (min-width:540px){ .ini-carousel .carousel__track{ grid-auto-columns: 48%; } }
-@media (min-width:900px){ .ini-carousel .carousel__track{ grid-auto-columns: 31.5%; } }
+/* Responsividad */
+.ini-carousel .carousel__track{ grid-auto-columns: 88%; }
+@media (min-width:540px){ .ini-carousel .carousel__track{ grid-auto-columns: 52%; } }
+@media (min-width:900px){ .ini-carousel .carousel__track{ grid-auto-columns: 33.5%; } }
 
-/* Deps: columnas responsivas SIN perspective/coverflow */
-.deps__track{ grid-auto-columns: 86%; }
-@media (min-width:520px){  .deps__track{ grid-auto-columns: 66%; } }
-@media (min-width:900px){  .deps__track{ grid-auto-columns: 40%; } }
-@media (min-width:1200px){ .deps__track{ grid-auto-columns: 28%; } }
-@media (min-width:1440px){ .deps__track{ grid-auto-columns: 23.5%; } }
+.deps__track{ grid-auto-columns: 92%; }
+@media (min-width:520px){  .deps__track{ grid-auto-columns: 70%; } }
+@media (min-width:900px){  .deps__track{ grid-auto-columns: 44%; } }
+@media (min-width:1200px){ .deps__track{ grid-auto-columns: 30%; } }
+@media (min-width:1440px){ .deps__track{ grid-auto-columns: 25%; } }
 
-
-/* Accesibilidad/Motion */
-@media (prefers-reduced-motion: reduce){
-  .carousel__track{ scroll-behavior: auto; }
-  .img-smart, .carousel__nav{ transition: none !important; }
-  .ini-hero .ini-hero__img{ animation: none !important; transition: none !important; }
-  .ini-carousel .ini-thumb img{ animation: none !important; }
-}
-
-.ini-carousel .carousel__track{ grid-auto-columns: 82%; }
-@media (min-width:540px){ .ini-carousel .carousel__track{ grid-auto-columns: 48%; } }
-@media (min-width:900px){ .ini-carousel .carousel__track{ grid-auto-columns: 31.5%; } }
-
-.deps__track{ grid-auto-columns: 86%; }
-@media (min-width:520px){  .deps__track{ grid-auto-columns: 66%; } }
-@media (min-width:900px){  .deps__track{ grid-auto-columns: 40%; } }
-@media (min-width:1200px){ .deps__track{ grid-auto-columns: 28%; } }
-@media (min-width:1440px){ .deps__track{ grid-auto-columns: 23.5%; } }
+/* Render perf */
+.ini-intro, .ini-banner, .ini-section, .deps-wrap{ content-visibility: auto; contain-intrinsic-size: 600px; }
+.dep-card, .ini-card, .ini-hero{ contain: content; }
 
 @media (prefers-reduced-motion: reduce){
   .carousel__track{ scroll-behavior: auto; }
   .img-smart, .carousel__nav{ transition: none !important; }
-  .ini-hero .ini-hero__img{ animation: none !important; transition: none !important; }
-  .ini-carousel .ini-thumb img{ animation: none !important; }
+  .ini-hero .ini-hero__img{ transition: none !important; }
+  .ini-carousel .ini-thumb img{ transition: none !important; }
 }

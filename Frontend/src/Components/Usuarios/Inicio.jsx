@@ -267,12 +267,12 @@ const DepsGridScroll = ({ deps, depImgs, auto = true, interval = 5000 }) => {
 
 const Inicio = () => {
   const categorias = [
-    { id: "naturaleza", titulo: "Naturaleza", href: "/1" },
-    { id: "cultura", titulo: "Cultura", href: "/2" },
-    { id: "gastronomia", titulo: "Gastronomía", href: "/3" },
-    { id: "recreativo", titulo: "Recreativo", href: "/4" },
-    { id: "historia", titulo: "Historia", href: "/5" },
-    { id: "arqueologicos", titulo: "Arqueológicos", href: "/6" },
+    { id: "naturaleza", titulo: "Naturaleza" },
+    { id: "cultura", titulo: "Cultura" },
+    { id: "gastronomia", titulo: "Gastronomía" },
+    { id: "recreativo", titulo: "Recreativo"},
+    { id: "historia", titulo: "Historia" },
+    { id: "arqueologicos", titulo: "Arqueológicos"},
   ];
   const departamentos = [
     "Amazonas","Antioquia","Arauca","Atlántico","Bolívar","Boyacá","Caldas","Caquetá","Casanare","Cauca",
@@ -414,16 +414,6 @@ const Inicio = () => {
         </Carousel>
       </section>
 
-      {/* Banner */}
-      <section className="ini-banner card-3d">
-        <ImgSmart
-          src="/ImagenesP/Banners/elige-destino.jpg"
-          alt="Banner informativo"
-          w={1920}
-          h={480}
-          fit="cover"
-        />
-      </section>
 
       {/* Departamentos */}
       <section className="ini-section" aria-labelledby="deps-title">

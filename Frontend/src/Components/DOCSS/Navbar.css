@@ -18,6 +18,11 @@
 }
 
 /* ===== Header ===== */
+
+.userBtn__avatar { width: 28px; height: 28px; }
+.userBtn__avatarImg { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+
 .nv{
   background: linear-gradient(135deg, var(--nv-bg-1), var(--nv-bg-2));
   position: sticky; top: 0; z-index: 1000;
@@ -218,7 +223,6 @@
 }
 .combo__item:hover, .combo__item.is-active{ background: #2b1344; }
 
-/* ⭐ resalte de coincidencias */
 .combo__mark, .combo__item mark{
   background: transparent;
   color: var(--nv-accent-weak);

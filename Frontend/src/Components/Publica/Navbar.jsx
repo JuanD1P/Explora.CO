@@ -1,10 +1,8 @@
-/* ./components/Navbar.jsx */
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../ImagenesP/InicioUsuario/LOGOFOOTER.png";
 import "../DOCSS/Navbar.css";
 import DepartmentCombo from "./DepartmentCombo";
-import adminLogo from "../ImagenesP/ImagenesLogin/desconectar.png";
 
 const slugify = (s) =>
   s.toLowerCase()
@@ -18,6 +16,18 @@ const DEPARTAMENTOS = [
   "Nariño","Norte de Santander","Putumayo","Quindío","Risaralda","San Andrés","Santander","Sucre","Tolima",
   "Valle del Cauca","Vaupés","Vichada"
 ];
+
+function avatarFrom(name = "Usuario", photo = "") {
+  const fallback = `https://api.dicebear.com/7.x/thumbs/svg?seed=${encodeURIComponent(name)}`;
+  if (!photo) return fallback;
+  if (/^https?:\/\//i.test(photo)) return photo;
+  try {
+    const url = new URL(photo, window.location.origin);
+    return url.toString();
+  } catch {
+    return fallback;
+  }
+}
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -37,7 +47,6 @@ export default function Navbar() {
     navigate(`/departamentos/${slugify(name)}`);
   };
 
-  // Cierre al hacer click afuera / Escape
   useEffect(() => {
     const onClick = (e) => {
       if (!menuRef.current || !btnRef.current) return;
@@ -54,7 +63,6 @@ export default function Navbar() {
     };
   }, []);
 
-
   useEffect(() => {
     const onScroll = () => setStuck(window.scrollY > 6);
     onScroll();
@@ -62,22 +70,24 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const userName = localStorage.getItem("user-name") || localStorage.getItem("nombre_completo") || "Opciones";
+  const userPhoto = localStorage.getItem("user-avatar") || localStorage.getItem("foto_url") || "";
+  const userAvatar = avatarFrom(userName, userPhoto);
+
   return (
     <header className={`nv ${stuck ? "nv--stuck" : ""}`} role="banner">
       <div className="nv__inner">
-        {/* Logo */}
         <button className="nv__logoWrap" onClick={() => navigate("/Inicio")} aria-label="Ir al inicio">
           <img src={logo} alt="Explora.CO" className="nv__logo" />
         </button>
 
-   
         <div className="nv__center">
           <DepartmentCombo
             items={departamentos}
             value={depto}
             onChange={setDepto}
             onEnter={goDepto}
-            placeholder="Buscar departamento (Ctrl/Cmd + K)"
+            placeholder="Buscar Dpto (ctrl+k)"
             id="navbar-depto"
           />
           <button
@@ -94,7 +104,6 @@ export default function Navbar() {
           </button>
         </div>
 
-        {/* Menú usuario */}
         <div className="nv__user">
           <button
             ref={btnRef}
@@ -105,9 +114,14 @@ export default function Navbar() {
             aria-controls="menuUsuario"
           >
             <span className="userBtn__avatar" aria-hidden="true">
-              <img src={adminLogo} alt="" className="userBtn__avatarImg" />
+              <img
+                src={userAvatar}
+                alt=""
+                className="userBtn__avatarImg"
+                onError={(e) => { e.currentTarget.src = `https://api.dicebear.com/7.x/thumbs/svg?seed=${encodeURIComponent(userName)}`; }}
+              />
             </span>
-            <span className="userBtn__name">Mi cuenta</span>
+            <span className="userBtn__name">{userName || "Mi cuenta"}</span>
             <svg className={`chev ${menuOpen ? "is-open" : ""}`} viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
               <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
@@ -119,15 +133,8 @@ export default function Navbar() {
             role="menu"
             className={`menu ${menuOpen ? "is-open" : ""}`}
           >
-            <button role="menuitem" className="menu__item" onClick={() => { setMenuOpen(false); navigate("/perfil"); }}>
-              Mi perfil
-            </button>
-            <button role="menuitem" className="menu__item" onClick={() => { setMenuOpen(false); navigate("/favoritos"); }}>
-              Favoritos
-            </button>
 
             <div className="menu__sep" role="separator" />
-
             <button
               role="menuitem"
               className="menu__item menu__item--danger"
