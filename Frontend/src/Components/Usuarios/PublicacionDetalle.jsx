@@ -14,7 +14,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-/* ===== Helpers de formato ===== */
 const nfMoney = new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
 const hhmm = (t) => (t ? String(t).slice(0, 5) : "—");
 const fmtMoney = (v, cur = "COP") => {
@@ -22,15 +21,8 @@ const fmtMoney = (v, cur = "COP") => {
   try { return new Intl.NumberFormat("es-CO", { style: "currency", currency: cur }).format(Number(v)); }
   catch { return nfMoney.format(Number(v)); }
 };
-const fmtDate = (d) => {
-  if (!d) return "—";
-  const dt = new Date(d);
-  if (Number.isNaN(dt.getTime())) return String(d);
-  return dt.toLocaleDateString("es-CO");
-};
-const timeHHMM = (t) => (t ? String(t).slice(0, 5) : "");
 
-/* ===== Estrellas (UI) ===== */
+
 function Stars({ value = 0, outOf = 5, size = "md" }) {
   const whole = Math.floor(value);
   const frac = value - whole;
@@ -71,14 +63,10 @@ export default function PublicacionDetalle() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  /* ===== Publicación ===== */
   const [loading, setLoading] = useState(true);
   const [pub, setPub] = useState(null);
   const [tab, setTab] = useState("resumen");
-
-  /* Carrusel */
   const [idx, setIdx] = useState(0);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
   const hoverRef = useRef(false);
 
   useEffect(() => {
@@ -100,19 +88,16 @@ export default function PublicacionDetalle() {
 
   const fotos = Array.isArray(pub?.fotos) ? pub.fotos : [];
   const portada = fotos[0]?.imagen_url
-    ? (/^https?:\/\//i.test(fotos[0].imagen_url) ? fotos[0].imagen_url : `${API_URL}${fotos[0].imagen_url}`)
+    ? `${API_URL}${fotos[0].imagen_url}`
     : `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(pub?.nombre_lugar || "publicacion")}`;
-  const slides = fotos.length
-    ? fotos.map(f => (/^https?:\/\//i.test(f.imagen_url) ? f.imagen_url : `${API_URL}${f.imagen_url}`))
-    : [portada];
+  const slides = fotos.length ? fotos.map(f => `${API_URL}${f.imagen_url}`) : [portada];
 
   useEffect(() => {
     if (slides.length < 2) return;
-    const t = setInterval(() => { if (!hoverRef.current) setIdx(i => (i + 1) % slides.length); }, 4200);
+    const t = setInterval(() => { if (!hoverRef.current) setIdx(i => (i + 1) % slides.length); }, 4000);
     return () => clearInterval(t);
   }, [slides.length]);
 
-  /* Ubicación (solo para mapa y “Cómo llegar”) */
   const hasCoords = Number.isFinite(Number(pub?.lat)) && Number.isFinite(Number(pub?.lng));
   const center = useMemo(() => {
     const lat = Number(pub?.lat) || 4.711;
@@ -120,56 +105,25 @@ export default function PublicacionDetalle() {
     return [lat, lng];
   }, [pub]);
 
-  /* ===== Eventos (reales del perfil) ===== */
+
+  const mockEventos = useMemo(() => ([
+    { id: "e1", nombre: "Festival del Cacao Artesanal", fecha: "21/09/2025", descripcion: "Talleres y catas de chocolate.", imagen: "https://images.unsplash.com/photo-1540574163026-643ea20ade25?q=80&w=800&auto=format&fit=crop" },
+    { id: "e2", nombre: "Música al Parque", fecha: "04/10/2025", descripcion: "Conciertos al aire libre.", imagen: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=800&auto=format&fit=crop" },
+    { id: "e3", nombre: "Feria de Emprendedores", fecha: "19/10/2025", descripcion: "Marcas locales y gastronomía.", imagen: "https://images.unsplash.com/photo-1540574163026-643ea20ade25?q=80&w=800&auto=format&fit=crop" }
+  ]), []);
+
+
   const perfilId = Number(id);
-  const [evLoading, setEvLoading] = useState(true);
-  const [evError, setEvError] = useState(null);
-  const [eventos, setEventos] = useState([]);
-
-  const firstEventPhoto = (ev) => {
-    const u = ev?.fotos?.[0]?.imagen_url;
-    if (!u) {
-      const name = ev?.titulo || ev?.nombre_evento || "evento";
-      return `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(name)}`;
-    }
-    return /^https?:\/\//i.test(u) ? u : `${API_URL}${u}`;
-  };
-
-  useEffect(() => {
-    if (!perfilId) return;
-    let alive = true;
-    (async () => {
-      setEvLoading(true);
-      setEvError(null);
-      try {
-        const url = `${API_URL}/api/eventos?perfil_id=${encodeURIComponent(perfilId)}`;
-        const r = await fetch(url, { credentials: "include" });
-        if (!r.ok) throw new Error("No se pudieron cargar los eventos");
-        const data = await r.json();
-        if (alive) setEventos(Array.isArray(data) ? data : []);
-      } catch (e) {
-        console.error(e);
-        if (alive) {
-          setEventos([]);
-          setEvError(e.message || "Error cargando eventos");
-        }
-      } finally {
-        alive && setEvLoading(false);
-      }
-    })();
-    return () => { alive = false; };
-  }, [perfilId]);
-
-  /* ===== Valoraciones ===== */
   const userId = Number(localStorage.getItem("user-id") || 0);
 
-  const [ratLoading, setRatLoading] = useState(true);
+  const [ratLoading, setRatLoading] = useState(true);   // solo para cargas/fetch, NO para guardar
   const [ratError, setRatError] = useState(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);      // evitar parpadeo negro al guardar
+  const [isDeleting, setIsDeleting] = useState(false);  // idem al eliminar
 
   const [summary, setSummary] = useState({ total: 0, promedio: 0, dist: { 5:0, 4:0, 3:0, 2:0, 1:0 } });
   const [reviews, setReviews] = useState([]);
+
 
   const my = useMemo(() => reviews.find(r => Number(r.usuario_id) === userId) || null, [reviews, userId]);
 
@@ -179,9 +133,11 @@ export default function PublicacionDetalle() {
     else setForm({ estrellas: 5, comentario: "" });
   }, [my]);
 
+
   const [toast, setToast] = useState(null);
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2000); }
   const [editMode, setEditMode] = useState(false);
+
   useEffect(() => { if (my) setEditMode(false); }, [my?.id]);
 
   const orderedReviews = useMemo(() => {
@@ -191,7 +147,9 @@ export default function PublicacionDetalle() {
     return [...mine, ...others];
   }, [reviews, my, userId]);
 
+
   async function fetchRatings() {
+
     setRatError(null);
     try {
       const [sRes, lRes] = await Promise.all([
@@ -227,6 +185,7 @@ export default function PublicacionDetalle() {
     setRatLoading(true);
     fetchRatings().finally(() => setRatLoading(false));
   }, [perfilId]);
+
 
   async function handleSubmitReview(e) {
     e?.preventDefault?.();
@@ -271,6 +230,7 @@ export default function PublicacionDetalle() {
     }
   }
 
+  // eliminar (optimista)
   async function handleDeleteReview(idReview) {
     if (!userId) return;
     const ok = confirm("¿Eliminar tu opinión? Esta acción no se puede deshacer.");
@@ -305,19 +265,6 @@ export default function PublicacionDetalle() {
     return vals.length ? Math.max(...vals) : 0;
   }, [summary]);
 
-  /* ===== Lightbox handlers ===== */
-  const openLightbox = (i) => { setIdx(i); setLightboxOpen(true); };
-  useEffect(() => {
-    const onKey = (e) => {
-      if (!lightboxOpen) return;
-      if (e.key === "Escape") setLightboxOpen(false);
-      if (e.key === "ArrowRight") setIdx(i => (i + 1) % slides.length);
-      if (e.key === "ArrowLeft") setIdx(i => (i - 1 + slides.length) % slides.length);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [lightboxOpen, slides.length]);
-
   return (
     <main className="pubk-root" aria-busy={loading ? "true" : "false"}>
       <div className="pubk-container">
@@ -328,7 +275,7 @@ export default function PublicacionDetalle() {
             <h1 className="pubk-title">{pub?.nombre_lugar || "—"}</h1>
             <div className="pubk-chips">
               <span className="pubk-chip">{pub?.categoria || "—"}</span>
-              {pub?.ciudad && <span className="pubk-chip ghost">{pub?.ciudad}</span>}
+              <span className="pubk-chip">{pub?.ciudad || "—"}</span>
             </div>
           </div>
 
@@ -337,7 +284,6 @@ export default function PublicacionDetalle() {
           </button>
         </header>
 
-        {/* VISTAS */}
         <nav className="pubk-views" role="tablist" aria-label="Vistas">
           {[
             { id: "resumen", label: "Resumen" },
@@ -358,7 +304,6 @@ export default function PublicacionDetalle() {
 
         {/* BLOQUE PRINCIPAL */}
         <section className="pubk-main">
-          {/* Carrusel mejorado */}
           <div
             className="pubk-carousel"
             onMouseEnter={() => (hoverRef.current = true)}
@@ -367,19 +312,13 @@ export default function PublicacionDetalle() {
             <button className="pubk-carr-arrow is-left" onClick={() => setIdx(i => (i - 1 + slides.length) % slides.length)} aria-label="Anterior">‹</button>
             <div className="pubk-carr-box" role="region" aria-label="Galería destacada">
               {slides.map((src, i) => (
-                <button
-                  key={i}
-                  className={`pubk-carr-slide ${i === idx ? "is-active" : ""}`}
-                  aria-hidden={i !== idx}
-                  onClick={() => openLightbox(i)}
-                  title="Ampliar imagen"
-                >
+                <div key={i} className={`pubk-carr-slide ${i === idx ? "is-active" : ""}`} aria-hidden={i !== idx}>
                   <img
                     src={src}
                     alt={pub?.nombre_lugar || "imagen destacada"}
                     onError={(e) => { e.currentTarget.src = `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(pub?.nombre_lugar || "publicacion")}`; }}
                   />
-                </button>
+                </div>
               ))}
             </div>
             <button className="pubk-carr-arrow is-right" onClick={() => setIdx(i => (i + 1) % slides.length)} aria-label="Siguiente">›</button>
@@ -392,7 +331,6 @@ export default function PublicacionDetalle() {
             )}
           </div>
 
-          {/* Lado derecho con tarjetas limpias */}
           <aside className="pubk-side">
             <div className="pubk-side-content">
               {loading && <div className="pubk-empty">Cargando…</div>}
@@ -403,10 +341,9 @@ export default function PublicacionDetalle() {
                   {tab === "resumen" && (
                     <div className="pubk-card">
                       <dl className="pubk-kv">
+                        <div className="pubk-kv-row"><dt>Empresa ID</dt><dd>{pub?.empresa_id ?? "—"}</dd></div>
                         <div className="pubk-kv-row"><dt>Dirección</dt><dd>{pub?.direccion || "—"}</dd></div>
-                        {pub?.descripcion && (
-                          <div className="pubk-kv-row pubk-row-multi"><dt>Descripción</dt><dd>{pub.descripcion}</dd></div>
-                        )}
+                        <div className="pubk-kv-row pubk-row-multi"><dt>Descripción</dt><dd>{pub?.descripcion || "—"}</dd></div>
                         <div className="pubk-kv-row"><dt>Creado</dt><dd>{pub?.created_at ? new Date(pub.created_at).toLocaleString("es-CO") : "—"}</dd></div>
                         <div className="pubk-kv-row"><dt>Actualizado</dt><dd>{pub?.updated_at ? new Date(pub.updated_at).toLocaleString("es-CO") : "—"}</dd></div>
                       </dl>
@@ -416,23 +353,23 @@ export default function PublicacionDetalle() {
                   {tab === "ubicacion" && (
                     <div className="pubk-card">
                       <div className="pubk-loc-top">
-                        {hasCoords ? (
+                        <div className="pubk-pill"><span>Lat</span><strong>{pub?.lat ?? "—"}</strong></div>
+                        <div className="pubk-pill"><span>Lng</span><strong>{pub?.lng ?? "—"}</strong></div>
+                        {hasCoords && (
                           <a className="pubk-link" href={`https://www.google.com/maps?q=${encodeURIComponent(pub.lat + "," + pub.lng)}`} target="_blank" rel="noreferrer">
-                            ¿Cómo llegar? Abrir en Google Maps
+                            ¿No Sabes llegar? Mira la ruta con Google Maps
                           </a>
-                        ) : (
-                          <span className="pubk-link muted">Ubicación no disponible</span>
                         )}
                       </div>
                       <div className="pubk-map">
                         {hasCoords ? (
-                          <MapContainer center={center} zoom={13} style={{ width: "100%", height: 260 }}>
+                          <MapContainer center={center} zoom={13} style={{ width: "100%", height: 240 }}>
                             <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                             <Marker position={center}>
                               <Popup><b>{pub?.nombre_lugar}</b><div style={{ maxWidth: 220, marginTop: 6 }}>{pub?.direccion || pub?.ciudad}</div></Popup>
                             </Marker>
                           </MapContainer>
-                        ) : <div className="pubk-empty">Sin mapa disponible</div>}
+                        ) : <div className="pubk-empty">Sin coordenadas</div>}
                       </div>
                     </div>
                   )}
@@ -451,9 +388,9 @@ export default function PublicacionDetalle() {
                           <h3 className="pubk-h3">Precios</h3>
                           <div className="pubk-rows">
                             <div><span>Moneda</span><strong>{pub?.moneda || "COP"}</strong></div>
-                            <div><span>Desde</span><strong>{fmtMoney(pub?.precio_desde, pub?.moneda)}</strong></div>
-                            <div><span>Hasta</span><strong>{fmtMoney(pub?.precio_hasta, pub?.moneda)}</strong></div>
-                            {pub?.info_precios && <div className="pubk-row-full"><span>Detalle</span><strong>{pub.info_precios}</strong></div>}
+                            <div><span>Precio desde</span><strong>{fmtMoney(pub?.precio_desde, pub?.moneda)}</strong></div>
+                            <div><span>Precio hasta</span><strong>{fmtMoney(pub?.precio_hasta, pub?.moneda)}</strong></div>
+                            <div className="pubk-row-full"><span>Detalle</span><strong>{pub?.info_precios || "—"}</strong></div>
                           </div>
                         </div>
                       </div>
@@ -465,61 +402,27 @@ export default function PublicacionDetalle() {
           </aside>
         </section>
 
-        {/* ===================== EVENTOS (reales) ===================== */}
+        {/* ===================== EVENTOS ===================== */}
         <section className="pubk-section" aria-labelledby="sec-eventos">
           <div className="pubk-sec-head">
             <h2 id="sec-eventos" className="pubk-sec-title">Eventos</h2>
-            <span className="pubk-sec-sub">{evLoading ? "Cargando…" : `${eventos.length} evento(s)`}</span>
           </div>
 
-          {evError && <div className="pubk-empty">⚠️ {evError}</div>}
-
-          {!evLoading && !evError && eventos.length === 0 && (
-            <div className="pubk-empty">Aún no hay eventos para este lugar.</div>
-          )}
-
           <div className="pubk-events-grid">
-            {eventos.map(ev => {
-              const title = ev.titulo || ev.nombre_evento || ev.nombre || "Evento";
-              const fIni = ev.fecha_inicio || ev.fecha_desde || ev.fecha || ev.inicio;
-              const fFin = ev.fecha_fin || ev.fecha_hasta || ev.fin;
-              const hIni = ev.hora_desde || ev.hora_inicio;
-              const hFin = ev.hora_hasta || ev.hora_fin;
-
-              return (
-                <article key={ev.id} className="event-card">
-                  <div className="event-media">
-                    <img
-                      src={firstEventPhoto(ev)}
-                      alt={title}
-                      onError={(e) => {
-                        e.currentTarget.src = `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(title)}`;
-                      }}
-                    />
+            {mockEventos.map(ev => (
+              <article key={ev.id} className="event-card">
+                <div className="event-media">
+                  <img src={ev.imagen} alt={ev.nombre} />
+                </div>
+                <div className="event-body">
+                  <h3 className="event-title">{ev.nombre}</h3>
+                  <div className="event-meta">
+                    <span className="event-date" aria-label="Fecha del evento">{ev.fecha}</span>
                   </div>
-                  <div className="event-body">
-                    <h3 className="event-title">{title}</h3>
-
-                    {(fIni || fFin || hIni || hFin) && (
-                      <div className="event-meta">
-                        <span className="event-date" aria-label="Fecha del evento">
-                          {fmtDate(fIni)} {timeHHMM(hIni)} {(fFin || hFin) && "—"} {fmtDate(fFin)} {timeHHMM(hFin)}
-                        </span>
-                      </div>
-                    )}
-
-                    {ev.descripcion && <p className="event-desc">{ev.descripcion}</p>}
-
-                    {(ev.precio_desde != null || ev.precio_hasta != null) && (
-                      <div className="event-prices">
-                        <span className="k">Precios:</span>{" "}
-                        <strong>{fmtMoney(ev.precio_desde, ev.moneda)} – {fmtMoney(ev.precio_hasta, ev.moneda)}</strong>
-                      </div>
-                    )}
-                  </div>
-                </article>
-              );
-            })}
+                  <p className="event-desc">{ev.descripcion}</p>
+                </div>
+              </article>
+            ))}
           </div>
         </section>
 
@@ -652,27 +555,6 @@ export default function PublicacionDetalle() {
           )}
         </section>
       </div>
-
-      {/* ==== LIGHTBOX (pantalla completa) ==== */}
-      {lightboxOpen && (
-        <div className="lb-backdrop" onClick={() => setLightboxOpen(false)} role="dialog" aria-modal="true">
-          <div className="lb-inner" onClick={(e) => e.stopPropagation()}>
-            <button className="lb-close" onClick={() => setLightboxOpen(false)} aria-label="Cerrar">✕</button>
-            <button className="lb-nav left" onClick={() => setIdx(i => (i - 1 + slides.length) % slides.length)} aria-label="Anterior">‹</button>
-            <div className="lb-stage">
-              <img src={slides[idx]} alt={`imagen ${idx + 1}`} />
-            </div>
-            <button className="lb-nav right" onClick={() => setIdx(i => (i + 1) % slides.length)} aria-label="Siguiente">›</button>
-            {slides.length > 1 && (
-              <div className="lb-dots">
-                {slides.map((_, i) => (
-                  <button key={i} className={`lb-dot ${i === idx ? "is-active" : ""}`} onClick={() => setIdx(i)} aria-label={`Ir a imagen ${i + 1}`} />
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </main>
   );
 }
