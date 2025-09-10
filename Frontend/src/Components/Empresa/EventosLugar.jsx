@@ -214,16 +214,15 @@ export default function EventosLugar() {
     <main className="pe-root">
       <header className="pe-header glass card-3d" style={{ maxWidth: 1000 }}>
         <div className="pe-header__left">
-          {/* 🔙 Botón para regresar */}
           <button
             type="button"
             className="btn btn-light"
             onClick={() => navigate("/InicioEmpresa")}
             style={{ marginRight: 12 }}
           >
-            ← Inicio
+            Inicio
           </button>
-          <span className="pe-logo" aria-hidden>🎉</span>
+          <span className="pe-logo" aria-hidden></span>
           <div>
             <h1>{isEdit ? `Editar evento #${routeId}` : "Eventos del lugar"}</h1>
             <p>{isEdit ? "Modifica y guarda tus cambios" : "Crea y gestiona eventos de tus lugares"}</p>

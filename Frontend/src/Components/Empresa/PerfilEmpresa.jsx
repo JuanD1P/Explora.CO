@@ -443,7 +443,7 @@ const PerfilEmpresa = () => {
             onClick={() => navigate("/InicioEmpresa")}
             style={{ marginRight: 12 }}
           >
-            ← Inicio
+            Inicio
           </button>
           <span className="pe-logo" aria-hidden>🏢</span>
           <div>
@@ -451,18 +451,7 @@ const PerfilEmpresa = () => {
             <p>{isEdit ? "Actualiza los datos de tu publicación" : "Crea un lugar atractivo para tus visitantes"}</p>
           </div>
         </div>
-        <div className="pe-header__right">
-          <form onSubmit={subirAvatar} className="pe-avatar-form">
-            <div className="pe-avatar">{avatarPreview ? <img src={avatarPreview} alt="avatar" /> : <span>📷</span>}</div>
-            <input ref={avatarInputRef} type="file" accept="image/*" onChange={onPickAvatar} hidden />
-            <div className="pe-avatar-actions">
-              <button type="button" className="btn btn-outline" onClick={() => avatarInputRef.current?.click()}>Seleccionar</button>
-              <button type="submit" className="btn btn-dark" disabled={subiendoAvatar || !avatarFile}>
-                {subiendoAvatar ? "Subiendo..." : "Guardar foto"}
-              </button>
-            </div>
-          </form>
-        </div>
+      
       </header>
 
       {/* CONTENIDO */}

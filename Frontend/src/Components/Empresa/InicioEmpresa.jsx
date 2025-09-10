@@ -226,13 +226,6 @@ const InicioE = () => {
   /** ===== Render ===== */
   return (
     <main className="emp-root">
-      <header className="emp-header glass">
-        <div className="emp-brand">
-          <span className="emp-logo" aria-hidden>🏢</span>
-          <strong>Panel de Empresa</strong>
-        </div>
-      </header>
-
       <section className="emp-hero card-3d">
         <div className="emp-hero__banner">
           <ImgSmart
@@ -523,10 +516,6 @@ const InicioE = () => {
           </div>
         </div>
       )}
-
-      <footer className="emp-footer">
-        <small>© {new Date().getFullYear()} Tu Empresa — Panel</small>
-      </footer>
 
       <ConfirmModal />
     </main>

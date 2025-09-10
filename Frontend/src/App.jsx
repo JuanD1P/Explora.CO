@@ -59,6 +59,7 @@ function App() {
         />
 
         {/* EMPRESA: ahora con Navbar */}
+        <Route element={<LayoutWithoutFooter />}>
         <Route element={<LayoutWithNavbar />}>
           <Route
             path="/InicioEmpresa"
@@ -111,7 +112,7 @@ function App() {
         </Route>
 
         {/* USUARIOS: con Navbar (como ya tenías) y sin Footer en estas vistas intermedias */}
-        <Route element={<LayoutWithoutFooter />}>
+        
           <Route element={<LayoutWithNavbar />}>
             <Route
               path="/Inicio"
@@ -184,7 +185,7 @@ function LayoutWithNavbar() {
   );
 }
 
-// Layout con Footer (como ya lo manejabas)
+// Layout con Footer
 function LayoutWithoutFooter() {
   return (
     <>

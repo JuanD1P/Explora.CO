@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 const API_URL = 'http://localhost:3000';
 
-const USER_ID = 8;
+const USER_ID = 14;
 
 export default function ValoracionesLugar() {
   const [lugares, setLugares] = useState([]);
