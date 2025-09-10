@@ -220,6 +220,9 @@ export default function Admin() {
           <button onClick={() => navigate("/AdminPublicaciones")} className="btn accent">
             VER PUBLICACIONES
           </button>
+          <button onClick={() => navigate("/")} className="btn accent">
+            CERRAR SESION
+          </button>
         </div>
       </header>
 
