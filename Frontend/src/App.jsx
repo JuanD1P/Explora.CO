@@ -14,6 +14,7 @@ import PublicacionDetalle from './Components/Usuarios/PublicacionDetalle.jsx';
 
 /* Importaciones de Componentes Para los administradores */
 import Admin from './Components/Administrador/Admin';
+import AdminPublicaciones from './Components/Administrador/AdminPublicaciones.jsx';
 
 /* Importaciones de Componentes Para las empresas*/
 import InicioEmpresa from './Components/Empresa/InicioEmpresa';
@@ -48,6 +49,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['ADMIN']}>
               <Admin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/AdminPublicaciones"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <AdminPublicaciones />
             </ProtectedRoute>
           }
         />

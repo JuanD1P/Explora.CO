@@ -217,7 +217,7 @@ export default function Admin() {
         </div>
 
         <div className="admin-header-actions">
-          <button onClick={() => navigate("/")} className="btn accent">
+          <button onClick={() => navigate("/AdminPublicaciones")} className="btn accent">
             VER PUBLICACIONES
           </button>
         </div>
