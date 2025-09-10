@@ -174,6 +174,7 @@ export default function EventosLugar() {
         alert("Evento creado");
       }
 
+      // Limpieza opcional si te quedaras
       setNombreEvento("");
       setDescripcion("");
       setFotoPrincipal(null);
@@ -184,6 +185,7 @@ export default function EventosLugar() {
       if (perfilId) await cargarEventos(perfilId);
       setImgBust(Date.now());
 
+      // Redirigir tras guardar
       navigate("/InicioEmpresa");
     } catch (err) {
       alert(err.message);
@@ -362,7 +364,7 @@ export default function EventosLugar() {
               className="btn btn-outline"
               onClick={() => {
                 sessionStorage.removeItem("evento-edit");
-                navigate("/InicioEmpresa");
+                navigate("/InicioEmpresa"); // Redirigir al cancelar edición
               }}
             >
               Cancelar edición
