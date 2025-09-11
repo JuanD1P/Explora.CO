@@ -30,6 +30,47 @@ const fmtDate = (d) => {
 };
 const timeHHMM = (t) => (t ? String(t).slice(0, 5) : "");
 
+/* ===== Helpers de fecha para estado del evento ===== */
+const toDateAt = (d, h = "00:00") => {
+  if (!d) return null;
+  const s = String(d);
+  const isYMD = /^\d{4}-\d{2}-\d{2}$/.test(s);
+  const base = isYMD ? `${s}T${h}:00` : s; // si viene 'YYYY-MM-DD' anexamos hora
+  const dt = new Date(base);
+  return Number.isNaN(dt.getTime()) ? null : dt;
+};
+
+function getEventStartEnd(ev) {
+  // Soporta múltiples campos del backend + fechae
+  const fIniRaw = ev.fecha_inicio || ev.fecha_desde || ev.fecha || ev.inicio || ev.fechae || null;
+  const fFinRaw = ev.fecha_fin || ev.fecha_hasta || ev.fin || ev.fechae || null;
+
+  const hIni = ev.hora_desde || ev.hora_inicio || null;
+  const hFin = ev.hora_hasta || ev.hora_fin || null;
+
+  // Si solo hay fecha (fechae), asumimos día completo
+  const start = toDateAt(fIniRaw, hIni || (ev.fechae ? "00:00" : "00:00"));
+  const end   = toDateAt(fFinRaw, hFin || (ev.fechae ? "23:59" : "23:59"));
+
+  return { start, end };
+}
+
+function getEventStatus(ev) {
+  const now = new Date();
+  const { start, end } = getEventStartEnd(ev);
+
+  // Normalizamos: si falta uno, lo igualamos al otro para poder decidir
+  const s = start || end;
+  const e = end || start;
+
+  if (!s && !e) return { code: null, label: null, color: "#6b7280" };
+
+  if (now < s)        return { code: "proximo",   label: "PRÓXIMO",   color: "#059669" };   // verde
+  if (now > e)        return { code: "vencido",   label: "VENCIDO",   color: "#ef4444" };   // rojo
+  // Entre s y e (o mismo día con fechae)
+  return { code: "en-marcha", label: "EN MARCHA", color: "#2563eb" };                        // azul
+}
+
 /* ===== Estrellas (UI) ===== */
 function Stars({ value = 0, outOf = 5, size = "md" }) {
   const whole = Math.floor(value);
@@ -358,7 +399,7 @@ export default function PublicacionDetalle() {
 
         {/* BLOQUE PRINCIPAL */}
         <section className="pubk-main">
-          {/* Carrusel mejorado */}
+          {/* Carrusel */}
           <div
             className="pubk-carousel"
             onMouseEnter={() => (hoverRef.current = true)}
@@ -392,7 +433,7 @@ export default function PublicacionDetalle() {
             )}
           </div>
 
-          {/* Lado derecho con tarjetas limpias */}
+          {/* Lado derecho */}
           <aside className="pubk-side">
             <div className="pubk-side-content">
               {loading && <div className="pubk-empty">Cargando…</div>}
@@ -481,14 +522,18 @@ export default function PublicacionDetalle() {
           <div className="pubk-events-grid">
             {eventos.map(ev => {
               const title = ev.titulo || ev.nombre_evento || ev.nombre || "Evento";
-              const fIni = ev.fecha_inicio || ev.fecha_desde || ev.fecha || ev.inicio;
-              const fFin = ev.fecha_fin || ev.fecha_hasta || ev.fin;
+
+              // NUEVO: estado del evento
+              const { code, label, color } = getEventStatus(ev);
+
+              const fIni = ev.fecha_inicio || ev.fecha_desde || ev.fecha || ev.inicio || ev.fechae;
+              const fFin = ev.fecha_fin || ev.fecha_hasta || ev.fin || ev.fechae;
               const hIni = ev.hora_desde || ev.hora_inicio;
               const hFin = ev.hora_hasta || ev.hora_fin;
 
               return (
                 <article key={ev.id} className="event-card">
-                  <div className="event-media">
+                  <div className="event-media" style={{ position: "relative" }}>
                     <img
                       src={firstEventPhoto(ev)}
                       alt={title}
@@ -496,7 +541,27 @@ export default function PublicacionDetalle() {
                         e.currentTarget.src = `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(title)}`;
                       }}
                     />
+                    {label && (
+                      <span
+                        className="event-badge"
+                        style={{
+                          position: "absolute",
+                          top: 8,
+                          left: 8,
+                          background: color,
+                          color: "#fff",
+                          padding: "4px 10px",
+                          borderRadius: 999,
+                          fontSize: 12,
+                          fontWeight: 700,
+                          letterSpacing: .3,
+                        }}
+                      >
+                        {label}
+                      </span>
+                    )}
                   </div>
+
                   <div className="event-body">
                     <h3 className="event-title">{title}</h3>
 
@@ -653,7 +718,7 @@ export default function PublicacionDetalle() {
         </section>
       </div>
 
-      {/* ==== LIGHTBOX (pantalla completa) ==== */}
+      {/* ==== LIGHTBOX ==== */}
       {lightboxOpen && (
         <div className="lb-backdrop" onClick={() => setLightboxOpen(false)} role="dialog" aria-modal="true">
           <div className="lb-inner" onClick={(e) => e.stopPropagation()}>
@@ -676,6 +741,3 @@ export default function PublicacionDetalle() {
     </main>
   );
 }
-
-
-

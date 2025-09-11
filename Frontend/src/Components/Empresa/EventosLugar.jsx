@@ -1,6 +1,6 @@
 /* ---------------------- EVENTOS ------------------
-ESTA VISTA ES LA ENCARGADA DE CREAR EVENTOS CON 
-RESPECTO A UNA PUBLICACION ---------------------*/
+   VISTA PARA CREAR / EDITAR EVENTOS DE UN LUGAR
+-------------------------------------------------- */
 
 import React, { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -13,6 +13,17 @@ const EMPRESA_ID = Number(localStorage.getItem("user-id"));
 const MAX_MB = 10;
 const ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
 
+// Formatea a yyyy-mm-dd (para <input type="date">)
+function toYYYYMMDD(d) {
+  if (!d) return "";
+  // ya viene yyyy-mm-dd
+  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+  const dt = new Date(d);
+  if (Number.isNaN(dt.getTime())) return "";
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`;
+}
+
 export default function EventosLugar() {
   const { id: routeId } = useParams();
   const navigate = useNavigate();
@@ -24,6 +35,7 @@ export default function EventosLugar() {
   const [perfilId, setPerfilId] = useState("");
   const [nombreEvento, setNombreEvento] = useState("");
   const [descripcion, setDescripcion] = useState("");
+  const [fechae, setFechae] = useState(""); // <-- NUEVO
 
   const [fotoPrincipal, setFotoPrincipal] = useState(null);
   const [fotoPrincipalPreview, setFotoPrincipalPreview] = useState(null);
@@ -93,6 +105,7 @@ export default function EventosLugar() {
           if (ev.perfil_id) setPerfilId(String(ev.perfil_id));
           setNombreEvento(ev.nombre_evento || ev.titulo || "");
           setDescripcion(ev.descripcion || "");
+          setFechae(toYYYYMMDD(ev.fechae));            // <-- carga fechae
           setFotosExistentes(Array.isArray(ev.fotos) ? ev.fotos : []);
           setRemoveIds([]);
           return;
@@ -106,6 +119,7 @@ export default function EventosLugar() {
           if (data.perfil_id) setPerfilId(String(data.perfil_id));
           setNombreEvento(data.nombre_evento || data.titulo || "");
           setDescripcion(data.descripcion || "");
+          setFechae(toYYYYMMDD(data.fechae));          // <-- carga fechae
           setFotosExistentes(Array.isArray(data.fotos) ? data.fotos : []);
           setRemoveIds([]);
         }
@@ -154,6 +168,9 @@ export default function EventosLugar() {
     fd.append("perfil_id", perfilId);
     fd.append("nombre_evento", nombreEvento.trim());
     fd.append("descripcion", descripcion);
+    // fechae opcional; si vacío, se envía '' y el backend lo trata como null o lo valida
+    fd.append("fechae", fechae || "");
+
     if (isEdit && removeIds.length) fd.append("remove_foto_ids", JSON.stringify(removeIds));
     if (fotoPrincipal) fd.append("fotos", fotoPrincipal);
     fotosExtra.forEach(({ file }) => fd.append("fotos", file));
@@ -174,9 +191,10 @@ export default function EventosLugar() {
         alert("Evento creado");
       }
 
-      // Limpieza opcional si te quedaras
+      // Limpieza
       setNombreEvento("");
       setDescripcion("");
+      setFechae(""); // reset
       setFotoPrincipal(null);
       setFotoPrincipalPreview(null);
       setFotosExtra([]);
@@ -185,7 +203,6 @@ export default function EventosLugar() {
       if (perfilId) await cargarEventos(perfilId);
       setImgBust(Date.now());
 
-      // Redirigir tras guardar
       navigate("/InicioEmpresa");
     } catch (err) {
       alert(err.message);
@@ -252,6 +269,16 @@ export default function EventosLugar() {
               onChange={(e) => setNombreEvento(e.target.value)}
               placeholder="Ej: Festival de música septiembre"
             />
+          </div>
+
+          <div className="field">
+            <label>Fecha del evento</label>
+            <input
+              type="date"
+              value={fechae}
+              onChange={(e) => setFechae(e.target.value)}
+            />
+            <small className="pe-hint">Formato: AAAA-MM-DD</small>
           </div>
 
           <div className="field">
@@ -363,7 +390,7 @@ export default function EventosLugar() {
               className="btn btn-outline"
               onClick={() => {
                 sessionStorage.removeItem("evento-edit");
-                navigate("/InicioEmpresa"); // Redirigir al cancelar edición
+                navigate("/InicioEmpresa");
               }}
             >
               Cancelar edición
@@ -377,8 +404,14 @@ export default function EventosLugar() {
           <h4 className="pe-list__title">Eventos creados</h4>
           <ul className="pe-list__ul">
             {eventos.map((ev) => (
-              <li key={ev.id}>
-                <strong>{ev.nombre_evento}</strong><span>#{ev.id}</span>
+              <li key={ev.id} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <strong>{ev.nombre_evento}</strong>
+                <span>#{ev.id}</span>
+                {ev.fechae && (
+                  <span style={{ color: "#6b7280" }}>
+                    — {toYYYYMMDD(ev.fechae)}
+                  </span>
+                )}
               </li>
             ))}
           </ul>
